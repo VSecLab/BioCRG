@@ -1,4 +1,4 @@
-# ML_tesi
+# Activity Recognition Model
 
 This project is part of a research thesis focused on developing a model for activity recognition based on users' biomechanical data.
 
