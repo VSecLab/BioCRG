@@ -1,0 +1,16 @@
+Username,Features,Target_Activity,TestActivity,Target_Threshold,Test_Threshold,eps,min_samples,scaler,LogNumber,N_states,Ghost_Count,Ghost_Exp,Sequence_Probability,Normalized,LogProb,Length,AvgLogProb
+grims3,rotation_position,sphereActivity,sphereActivity,0.6,0.6,0.3,10,standard,1,2,1,4,0.00459568201371383,0.12716649986330805,-5.382638109005861,2,-2.6913190545029306
+grims3,rotation_position,sphereActivity,sphereActivity,0.6,0.6,0.3,10,standard,2,8,3,4,1.0583145482365944e-10,2.9284479746871834e-09,-22.969173336119145,8,-2.871146667014893
+grims3,rotation_position,sphereActivity,sphereActivity,0.6,0.6,0.3,10,standard,3,3,0,4,0.014338235294117643,0.39675138339173793,-4.2448255131603965,3,-1.4149418377201322
+grims3,rotation_position,sphereActivity,sphereActivity,0.6,0.6,0.3,10,standard,4,5,0,4,2.560399159663864e-05,0.0007084846131995318,-10.572762296889593,5,-2.1145524593779186
+grims3,rotation_position,sphereActivity,sphereActivity,0.6,0.6,0.3,10,standard,5,4,1,4,0.001617185439945944,0.04474892114253131,-6.427068023487047,4,-1.6067670058717618
+grims3,rotation_position,sphereActivity,sphereActivity,0.6,0.6,0.3,10,standard,6,4,0,4,0.0004608718487394957,0.012752723037591578,-7.682390538993427,4,-1.9205976347483567
+grims3,rotation_position,sphereActivity,sphereActivity,0.6,0.6,0.3,10,standard,7,5,0,4,0.0,0.0,-inf,5,-inf
+grims3,rotation_position,sphereActivity,sphereActivity,0.6,0.6,0.3,10,standard,8,3,1,4,0.015101514688775701,0.4178719850231836,-4.192960229677075,3,-1.3976534098923583
+grims3,rotation_position,sphereActivity,sphereActivity,0.6,0.6,0.3,10,standard,9,2,0,4,0.0,0.0,-inf,2,-inf
+grims3,rotation_position,sphereActivity,ladderActivity,0.6,0.5,0.3,10,standard,1,14,9,4,0.0,0.0,-inf,14,-inf
+grims3,rotation_position,sphereActivity,ladderActivity,0.6,0.5,0.3,10,standard,2,15,10,4,0.0,0.0,-inf,15,-inf
+grims3,rotation_position,sphereActivity,ladderActivity,0.6,0.5,0.3,10,standard,3,13,8,4,0.0,0.0,-inf,13,-inf
+grims3,rotation_position,sphereActivity,trashActivity,0.6,0.5,0.3,10,standard,1,18,8,4,0.0,0.0,-inf,18,-inf
+grims3,rotation_position,sphereActivity,trashActivity,0.6,0.5,0.3,10,standard,2,16,5,4,0.0,0.0,-inf,16,-inf
+grims3,rotation_position,sphereActivity,trashActivity,0.6,0.5,0.3,10,standard,3,17,7,4,2.5398778687908515e-75,1.0,-171.76176597783223,17,-10.10363329281366

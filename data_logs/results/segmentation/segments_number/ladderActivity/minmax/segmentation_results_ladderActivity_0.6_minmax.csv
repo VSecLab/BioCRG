@@ -1,0 +1,16 @@
+Username,Activity,Threshold,Scaler,LogNumber,NumberOfSegments
+pedro,ladderActivity,0.6,minmax,1,4
+pedro,ladderActivity,0.6,minmax,2,3
+pedro,ladderActivity,0.6,minmax,3,3
+dan,ladderActivity,0.6,minmax,1,1
+dan,ladderActivity,0.6,minmax,2,3
+dan,ladderActivity,0.6,minmax,3,1
+peppe,ladderActivity,0.6,minmax,1,11
+peppe,ladderActivity,0.6,minmax,2,3
+peppe,ladderActivity,0.6,minmax,3,8
+bigw,ladderActivity,0.6,minmax,1,1
+bigw,ladderActivity,0.6,minmax,3,6
+bigw,ladderActivity,0.6,minmax,4,3
+qwe,ladderActivity,0.6,minmax,2,3
+qwe,ladderActivity,0.6,minmax,3,10
+qwe,ladderActivity,0.6,minmax,5,4

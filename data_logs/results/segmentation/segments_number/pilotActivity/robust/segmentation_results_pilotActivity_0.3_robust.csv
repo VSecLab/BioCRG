@@ -1,0 +1,11 @@
+Username,Activity,Threshold,Scaler,LogNumber,NumberOfSegments
+xxx,pilotActivity,0.3,robust,1,6
+slasto,pilotActivity,0.3,robust,1,5
+minestra,pilotActivity,0.3,robust,1,10
+pabluccio,pilotActivity,0.3,robust,1,1
+Pa0l0l0,pilotActivity,0.3,robust,1,17
+ocran,pilotActivity,0.3,robust,1,5
+ocran,pilotActivity,0.3,robust,2,24
+ocran,pilotActivity,0.3,robust,3,12
+ocran,pilotActivity,0.3,robust,4,2
+ocran,pilotActivity,0.3,robust,8,15

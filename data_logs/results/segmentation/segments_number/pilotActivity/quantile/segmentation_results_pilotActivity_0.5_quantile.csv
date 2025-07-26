@@ -1,0 +1,16 @@
+Username,Activity,Threshold,Scaler,LogNumber,NumberOfSegments
+pedro,pilotActivity,0.5,quantile,1,1
+xxx,pilotActivity,0.5,quantile,1,1
+slasto,pilotActivity,0.5,quantile,1,1
+minestra,pilotActivity,0.5,quantile,1,1
+dan,pilotActivity,0.5,quantile,1,1
+pabluccio,pilotActivity,0.5,quantile,1,1
+Pa0l0l0,pilotActivity,0.5,quantile,1,1
+peppe,pilotActivity,0.5,quantile,1,1
+bigw,pilotActivity,0.5,quantile,1,1
+qwe,pilotActivity,0.5,quantile,1,1
+ocran,pilotActivity,0.5,quantile,1,1
+ocran,pilotActivity,0.5,quantile,2,1
+ocran,pilotActivity,0.5,quantile,3,1
+ocran,pilotActivity,0.5,quantile,4,1
+ocran,pilotActivity,0.5,quantile,8,1

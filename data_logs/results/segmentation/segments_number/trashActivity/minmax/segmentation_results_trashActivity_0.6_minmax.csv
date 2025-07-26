@@ -1,0 +1,13 @@
+Username,Activity,Threshold,Scaler,LogNumber,NumberOfSegments
+pedro,trashActivity,0.6,minmax,1,9
+pedro,trashActivity,0.6,minmax,2,6
+pedro,trashActivity,0.6,minmax,3,9
+dan,trashActivity,0.6,minmax,1,2
+dan,trashActivity,0.6,minmax,2,4
+dan,trashActivity,0.6,minmax,3,2
+peppe,trashActivity,0.6,minmax,1,3
+peppe,trashActivity,0.6,minmax,2,8
+peppe,trashActivity,0.6,minmax,3,9
+bigw,trashActivity,0.6,minmax,1,6
+bigw,trashActivity,0.6,minmax,3,2
+qwe,trashActivity,0.6,minmax,2,7
