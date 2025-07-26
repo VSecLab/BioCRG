@@ -168,9 +168,9 @@ def plot_histogram_on_feature(df: pd.DataFrame, feature: str, activity: str, thr
 
     plt.xticks(x_values)
     plt.xlabel('Number of Segments')
-    plt.ylabel('Frequency')
+    plt.ylabel('Number of Activities')
     plt.title(f'Histogram of Number of Segments - Activity: {activity}, Threshold: {threshold}, Scaler: {scaler}')
-
+    
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     
 def plot_histogram_of_segments(filepath: str, savepath: str):

@@ -1,2 +1,4 @@
 tmp/
 data_logs/test_dataset/
+model_project/src/test_dbscan.py
+model_project/src/kmeans.py
