@@ -205,9 +205,12 @@ def classify_point(x: np.array, class_stats: dict):
         sigma = params["covariance"]
 
         try:
-            log_likelihood = multivariate_normal.logpdf(x, mean=mu, cov=sigma)
-        except np.linalg.LinAlgError:
-            log_likelihood = -np.inf  # ignora matrici non invertibili
+            log_likelihood = multivariate_normal.logpdf(x, mean=mu, cov=sigma, allow_singular=True)
+            print(f"Log likelihood for label {label}: {log_likelihood}")
+        except np.linalg.LinAlgError as e:
+            log_likelihood = -np.inf  
+            print(f"Error computing logpdf for label {label}: {e}")
+
         if log_likelihood > best_log_likelihood:
             best_log_likelihood = log_likelihood
             best_label = label
