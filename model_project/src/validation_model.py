@@ -175,57 +175,121 @@ def find_closest_adjective(label, target_adj, adj_df):
     closest = same_sign.iloc[(same_sign['Adjective'] - target_adj).abs().argsort()].iloc[0]
     return (label, round(float(closest['Adjective']), 4))
 
-def compute_class_stats(df: pd.DataFrame, feature_columns: list, label_column="Label"):
+def compute_threshold(df: pd.DataFrame, feature_columns: list, class_stats: dict, quantile=0.05):
+    """
+    Compute the threshold for classifying points based on their log-likelihood scores.
+
+    Args: 
+        df (pd.DataFrame): The input DataFrame containing the data points.
+        feature_columns (list): The list of feature columns to consider.
+        class_stats (dict): The class statistics containing mean and covariance for each class.
+        quantile (float): The quantile to use for thresholding (default is 0.05).
+    Returns:
+        float: The computed threshold value.
+    """
+    max_lls = []
+
+    for _, row in df.iterrows():
+        x = row[feature_columns].to_numpy()
+        lls = []
+        for label, params in class_stats.items():
+            mu = params["mean"]
+            sigma = params["covariance"]
+            try:
+                ll = multivariate_normal.logpdf(x, mean=mu, cov=sigma, allow_singular=True)
+                lls.append(ll)
+            except np.linalg.LinAlgError:
+                continue
+        if lls:
+            max_lls.append(max(lls))
+
+    threshold = np.quantile(max_lls, quantile)
+    return threshold
+
+def compute_class_stats(df: pd.DataFrame, feature_columns: list, label_column="Label", epsilon=1e-6):
     """
     Compute the mean and covariance for each class in the DataFrame.
-    """
-    labels = df[label_column].unique()
-    stats = {}
 
+    Args: 
+        df (pd.DataFrame): The input DataFrame containing the data points.
+        feature_columns (list): The list of feature columns to consider.
+        label_column (str): The name of the label column (default is "Label").
+        epsilon (float): A small value to ensure numerical stability (default is 1e-6).
+    Return: 
+        dict: A dictionary containing the mean and covariance for each class.
+    """
+    labels = [l for l in df[label_column].unique() if l != -1]
+    stats = {}
     for label in labels:
         class_data = df[df[label_column] == label][feature_columns].to_numpy()
         mu = class_data.mean(axis=0)
         sigma = np.cov(class_data, rowvar=False)
-        stats[label] = {
-            "mean": mu,
-            "covariance": sigma
-        }
-
+        sigma_reg = sigma + epsilon * np.eye(sigma.shape[0])
+        stats[label] = {"mean": mu, "covariance": sigma_reg}
     return stats
 
-def classify_point(x: np.array, class_stats: dict):
-    """
-    Classify a point x based on the maximum likelihood estimation using the class statistics.
-    """
+
+def classify_point(x: np.array, class_stats: dict, threshold: float):
     best_label = None
     best_log_likelihood = -np.inf
 
     for label, params in class_stats.items():
         mu = params["mean"]
         sigma = params["covariance"]
-
         try:
-            log_likelihood = multivariate_normal.logpdf(x, mean=mu, cov=sigma, allow_singular=True)
-            print(f"Log likelihood for label {label}: {log_likelihood}")
+            ll = multivariate_normal.logpdf(x, mean=mu, cov=sigma, allow_singular=True)
+            print(f"Log likelihood for label {label}: {ll}")
         except np.linalg.LinAlgError as e:
-            log_likelihood = -np.inf  
+            ll = -np.inf
             print(f"Error computing logpdf for label {label}: {e}")
 
-        if log_likelihood > best_log_likelihood:
-            best_log_likelihood = log_likelihood
+        if ll > best_log_likelihood:
+            best_log_likelihood = ll
             best_label = label
 
+    if best_log_likelihood < threshold:
+        return -1  # outlier
     return best_label
 
 def segment_user(file_path: str, features: list, activity: str, scaler: str, threshold: float):
     try: 
-        _, rsv, adjectives = sg.segmentation_on_activity(file_path=file_path, features=features[1:], activity=activity, scaler=scaler, threshold=threshold)
+        _, rsv, lsv_user = sg.segmentation_on_activity(file_path=file_path, features=features[1:], activity=activity, scaler=scaler, threshold=threshold)
         rsv_df = pd.DataFrame(rsv, columns=['LogNumber'] + [str(i) for i in range(1, len(features) - 1)])
-        rsv_df.insert(0, 'Adjective', adjectives)
-        return rsv_df
+        #rsv_df.insert(0, 'Adjective', adjectives)
+
+
+        return rsv_df, lsv_user
     except Exception as e:
         print(f"Failed with error: {e}")
         return
+    
+def compute_user_state(lsv_mean: dict, log_df: pd.DataFrame, adj_df: pd.DataFrame):
+    rows = []
+
+    for username, logs in lsv_mean.items():
+        for log_key, segs in logs.items():
+            log_num = int(log_key.split("_")[1])  # "logNum_2" -> 2
+            for seg_key, value in segs.items():
+                # costruiamo la riga
+                rows.append({
+                    "Username": username,  # match con log_df
+                    "LogNumber": float(log_num),
+                    "Adjective": float(value)
+                })
+
+    # dataframe "flat" dal dict
+    df_from_dict = pd.DataFrame(rows)
+
+    # merge con log_df rispettando ordine
+    df_mean = log_df.copy().reset_index(drop=True)
+    df_mean["Adjective"] = df_from_dict["Adjective"].values
+    df_mean = df_mean[["Username", "LogNumber", "Adjective", "Label"]]
+
+    df_mean['MatchedState'] = df_mean.apply(
+        lambda row: str(find_closest_adjective(row['Label'], row['Adjective'], adj_df)), axis=1
+    )
+
+    return df_mean
 
 def main(): 
     username = "grims"

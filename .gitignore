@@ -5,3 +5,4 @@ model_project/src/kmeans.py
 data_logs/processed/
 data_logs/results/
 data_logs/results/
+model_project/src/tmp.txt

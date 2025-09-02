@@ -60,6 +60,7 @@ def format_state(state):
 def transition_matrix_computation(adj_df: pd.DataFrame, activity_df: pd.DataFrame):
     # lista ordinata di tutti gli stati unici come (label, adjective)
     state_list = adj_df.copy()
+    
     state_list['State'] = list(zip(state_list['Label'], state_list['Adjective']))
     state_list = state_list['State'].tolist()
     state_list.append((-1, None))
@@ -132,8 +133,8 @@ def transition_matrix_computation(adj_df: pd.DataFrame, activity_df: pd.DataFram
     
 def transition_computation(activity: str, scaler: str, threshold: float, eps: float, min_samples: int, dbscan_results: str, file_path: str):
     
-    sub_df = pd.read_csv(file_path + f"/substantives/substantives_{activity}_{threshold}_{scaler}_eps{eps}_minsample{min_samples}.csv")
-    adj_df = pd.read_csv(file_path + f"/adjectives/mean/mean_adjectives_{activity}_{threshold}_{scaler}_eps{eps}_minsample{min_samples}.csv")
+    #sub_df = pd.read_csv(file_path + f"/substantives/substantives_{activity}_{threshold}_{scaler}_eps{eps}_minsample{min_samples}.csv")
+    adj_df = pd.read_csv(file_path + f"/adjectives/adjectives_{activity}_{threshold}_{scaler}_eps{eps}_minsample{min_samples}.csv")
     activity_df = pd.read_csv(file_path + f"/all_points/dbscan_{activity}_{threshold}_{scaler}_eps{eps}_minsample{min_samples}.csv")
 
     df_transition, df_probabilities, df_initial = transition_matrix_computation(adj_df, activity_df)
@@ -169,3 +170,4 @@ if __name__ == "__main__":
         file_path=config.PROCESSED_DATA_DIR + "/dbscan_results_rotation/sphereActivity/standard"
     )
     exit(1) 
+

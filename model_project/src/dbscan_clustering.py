@@ -8,6 +8,8 @@ from sklearn.cluster import DBSCAN
 from data_processing.src import etl, config, plot
 import segmentation as sg 
 
+from sklearn.decomposition import PCA
+
 def get_substantives_dataframe(df: pd.DataFrame, unique_labels: np.ndarray):
     """
     Create a DataFrame with cluster labels and their corresponding centers.
@@ -63,15 +65,8 @@ def get_adjectives_dataframe(df: pd.DataFrame, unique_labels: np.ndarray):
 
 def grid(df: pd.DataFrame): 
 
-    eps_to_test = [round(eps,2) for eps in np.arange(0.1, 1, 0.05)]
-    min_samples_to_test = range(3, 11, 1)
-
-    # Dataframe per la metrica sulla distanza media dei noise points dai K punti più vicini
-    results_noise = pd.DataFrame( 
-        data = np.zeros((len(eps_to_test),len(min_samples_to_test))), # Empty dataframe
-        columns = min_samples_to_test, 
-        index = eps_to_test
-    )
+    eps_to_test = [round(eps,2) for eps in np.arange(0.1, 0.5, 0.05)]
+    min_samples_to_test = range(3, 15, 1)
 
     # Dataframe per la metrica sul numero di cluster
     results_clusters = pd.DataFrame( 
@@ -118,7 +113,9 @@ def grid(df: pd.DataFrame):
     return
 
 def scanning(df: pd.DataFrame, eps: float, min_samples: int, iter: int):
-    
+
+
+
     dbscan_model_ = DBSCAN(eps = eps, min_samples = min_samples, metric='correlation')
     dbscan_model_.fit(df)
         
