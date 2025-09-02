@@ -247,8 +247,12 @@ def classify_point(x: np.array, class_stats: dict, threshold: float):
             best_log_likelihood = ll
             best_label = label
 
+
     if best_log_likelihood < threshold:
+        print("Best label: -1\n")
         return -1  # outlier
+    else: 
+        print(f"Best label: {best_label}\n")
     return best_label
 
 def segment_user(file_path: str, features: list, activity: str, scaler: str, threshold: float):

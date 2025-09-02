@@ -8,8 +8,6 @@ from sklearn.cluster import DBSCAN
 from data_processing.src import etl, config, plot
 import segmentation as sg 
 
-from sklearn.decomposition import PCA
-
 def get_substantives_dataframe(df: pd.DataFrame, unique_labels: np.ndarray):
     """
     Create a DataFrame with cluster labels and their corresponding centers.
@@ -65,8 +63,8 @@ def get_adjectives_dataframe(df: pd.DataFrame, unique_labels: np.ndarray):
 
 def grid(df: pd.DataFrame): 
 
-    eps_to_test = [round(eps,2) for eps in np.arange(0.1, 0.5, 0.05)]
-    min_samples_to_test = range(3, 15, 1)
+    eps_to_test = [round(eps,2) for eps in np.arange(0.1, 0.55, 0.05)]
+    min_samples_to_test = range(3, 16, 1)
 
     # Dataframe per la metrica sul numero di cluster
     results_clusters = pd.DataFrame( 
@@ -113,8 +111,6 @@ def grid(df: pd.DataFrame):
     return
 
 def scanning(df: pd.DataFrame, eps: float, min_samples: int, iter: int):
-
-
 
     dbscan_model_ = DBSCAN(eps = eps, min_samples = min_samples, metric='correlation')
     dbscan_model_.fit(df)
@@ -171,6 +167,13 @@ def box_plot(df: pd.DataFrame):
 def pair_plot(df: pd.DataFrame):
     plt.figure(figsize=(15, 6))
     sns.pairplot(df)
+    plt.show()
+    plt.close()
+
+def pair_plot_cluster(df: pd.DataFrame):
+    plt.figure(figsize=(15, 6))
+    sns.pairplot(df, hue="Label", palette="tab10", diag_kind="hist")
+    plt.suptitle("Pairplot PCA con cluster DBSCAN", y=1.02)
     plt.show()
     plt.close()
 
