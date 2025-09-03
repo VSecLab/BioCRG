@@ -5,3 +5,4 @@ data_logs/results/
 model_project/src/test_dbscan.py
 model_project/src/kmeans.py
 model_project/src/tmp.txt
+model_project/test_lsv_structure.py
