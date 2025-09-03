@@ -5,7 +5,7 @@ BASE_PATH = "/Users/grims/Documents/Research/Tesi/ML_tesi"
 DATA_DIR = BASE_PATH + "/data_logs"
 RAW_DATA_DIR = DATA_DIR + "/raw"
 PROCESSED_DATA_DIR = DATA_DIR + "/processed" 
-TEST_DATA_DIR = DATA_DIR + "/test_dataset/datasets"
+TEST_DATA_DIR = RAW_DATA_DIR + "/test_data"
 
 RESULTS_DIR = DATA_DIR + "/results"
 SEGMENTATION_DIR = RESULTS_DIR + "/segmentation"
@@ -64,6 +64,20 @@ def find_file_from_username_and_basepath(username: str, base_path: str):
         if files:
             return str(files[0])  # Return the first CSV file found
     return None
+
+def get_all_files_from_basepath(base_path: str): 
+    """
+    Get all CSV files in the specified base path.
+
+    Args: 
+        base_path (str): The base path to search within.
+
+    Returns: 
+        list: A list of file paths for all CSV files found.
+    """
+
+    all_files = list(Path(base_path).glob("**/*.csv"))
+    return all_files
 
 def get_all_files():
     """

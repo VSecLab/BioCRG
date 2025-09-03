@@ -255,12 +255,11 @@ def classify_point(x: np.array, class_stats: dict, threshold: float):
         print(f"Best label: {best_label}\n")
     return best_label
 
-def segment_user(file_path: str, features: list, activity: str, scaler: str, threshold: float):
+def segment_user(username:str, file_path: str, features: list, activity: str, scaler: str, threshold: float):
     try: 
         _, rsv, lsv_user = sg.segmentation_on_activity(file_path=file_path, features=features[1:], activity=activity, scaler=scaler, threshold=threshold)
         rsv_df = pd.DataFrame(rsv, columns=['LogNumber'] + [str(i) for i in range(1, len(features) - 1)])
-        #rsv_df.insert(0, 'Adjective', adjectives)
-
+        rsv_df.insert(0, 'Username', username)
 
         return rsv_df, lsv_user
     except Exception as e:
