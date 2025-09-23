@@ -273,17 +273,16 @@ def compute_user_state(lsv_mean: dict, log_df: pd.DataFrame, adj_df: pd.DataFram
         for log_key, segs in logs.items():
             log_num = int(log_key.split("_")[1])  # "logNum_2" -> 2
             for seg_key, value in segs.items():
-                # costruiamo la riga
+
                 rows.append({
                     "Username": username,  # match con log_df
                     "LogNumber": float(log_num),
                     "Adjective": float(value)
                 })
 
-    # dataframe "flat" dal dict
+    
     df_from_dict = pd.DataFrame(rows)
 
-    # merge con log_df rispettando ordine
     df_mean = log_df.copy().reset_index(drop=True)
     df_mean["Adjective"] = df_from_dict["Adjective"].values
     df_mean = df_mean[["Username", "LogNumber", "Adjective", "Label"]]

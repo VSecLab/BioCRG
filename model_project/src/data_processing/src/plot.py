@@ -218,3 +218,147 @@ def plot_all_histograms(filepath: str, savepath: str):
                     file_path = os.path.join(dir_path, file)
                     print(f"Plotting histogram for {file_path}")
                     plot_histogram_of_segments(filepath=file_path, savepath=savepath)
+
+
+def plot_three_columns(df: pd.DataFrame, col1=None, col2=None, col3=None, plot_type='line', title=None):
+    """
+    Plotta tre colonne di un DataFrame usando diversi tipi di grafico.
+    
+    Args:
+        df (pd.DataFrame): DataFrame contenente i dati da plottare
+        col1 (str): Nome della prima colonna (se None, usa la prima colonna)
+        col2 (str): Nome della seconda colonna (se None, usa la seconda colonna) 
+        col3 (str): Nome della terza colonna (se None, usa la terza colonna)
+        plot_type (str): Tipo di grafico ('line', 'scatter', 'bar', '3d_scatter')
+        title (str): Titolo del grafico
+    """
+    
+    if df.shape[1] < 3:
+        print("Il DataFrame deve avere almeno 3 colonne")
+        return
+    
+    # Usa le colonne specificate o default alle prime tre colonne
+    x_column = col1 if col1 else df.columns[0]
+    y_column = col2 if col2 else df.columns[1] 
+    z_column = col3 if col3 else df.columns[2]
+    
+    # Verifica che le colonne esistano
+    missing_cols = [col for col in [x_column, y_column, z_column] if col not in df.columns]
+    if missing_cols:
+        print(f"Colonne mancanti nel DataFrame: {missing_cols}")
+        return
+    
+    if plot_type == '3d_scatter':
+        # Plot 3D scatter
+        fig = plt.figure(figsize=(12, 8))
+        ax = fig.add_subplot(111, projection='3d')
+        
+        scatter = ax.scatter(df[x_column], df[y_column], df[z_column], 
+                           c=range(len(df)), cmap='viridis', alpha=0.7, s=50)
+        
+        ax.set_xlabel(x_column, fontsize=12)
+        ax.set_ylabel(y_column, fontsize=12)
+        ax.set_zlabel(z_column, fontsize=12)
+        
+        if title:
+            ax.set_title(title, fontsize=14)
+        else:
+            ax.set_title(f'3D Scatter Plot: {x_column} vs {y_column} vs {z_column}', fontsize=14)
+            
+        # Aggiunge una colorbar
+        plt.colorbar(scatter, ax=ax, shrink=0.5, aspect=5)
+        
+    else:
+        # Plot 2D con tre linee/scatter/bar
+        plt.figure(figsize=(12, 8))
+        
+        if plot_type == 'line':
+            plt.plot(range(len(df)), df[x_column], label=x_column, marker='o', markersize=3, linewidth=2)
+            plt.plot(range(len(df)), df[y_column], label=y_column, marker='s', markersize=3, linewidth=2)
+            plt.plot(range(len(df)), df[z_column], label=z_column, marker='^', markersize=3, linewidth=2)
+            
+        elif plot_type == 'scatter':
+            # Per scatter plot, uso x_column come asse x e plotto y e z
+            plt.scatter(df[x_column], df[y_column], label=f'{y_column} vs {x_column}', alpha=0.7, s=30)
+            plt.scatter(df[x_column], df[z_column], label=f'{z_column} vs {x_column}', alpha=0.7, s=30)
+            plt.xlabel(x_column, fontsize=12)
+            
+        elif plot_type == 'bar':
+            x_pos = np.arange(len(df))
+            width = 0.25
+            
+            plt.bar(x_pos - width, df[x_column], width, label=x_column, alpha=0.8)
+            plt.bar(x_pos, df[y_column], width, label=y_column, alpha=0.8)
+            plt.bar(x_pos + width, df[z_column], width, label=z_column, alpha=0.8)
+            plt.xticks(x_pos, range(len(df)))
+            
+        if title:
+            plt.title(title, fontsize=14)
+        else:
+            plt.title(f'Plot delle colonne: {x_column}, {y_column}, {z_column}', fontsize=14)
+        
+        if plot_type != 'scatter':
+            plt.xlabel('Index', fontsize=12)
+        plt.ylabel('Values', fontsize=12)
+        plt.legend(fontsize=11)
+        plt.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_three_columns_subplots(df: pd.DataFrame, col1=None, col2=None, col3=None, title=None):
+    """
+    Plotta tre colonne di un DataFrame in subplot separati.
+    
+    Args:
+        df (pd.DataFrame): DataFrame contenente i dati da plottare
+        col1 (str): Nome della prima colonna (se None, usa la prima colonna)
+        col2 (str): Nome della seconda colonna (se None, usa la seconda colonna)
+        col3 (str): Nome della terza colonna (se None, usa la terza colonna)
+        title (str): Titolo generale del grafico
+    """
+    
+    if df.shape[1] < 3:
+        print("Il DataFrame deve avere almeno 3 colonne")
+        return
+    
+    # Usa le colonne specificate o default alle prime tre colonne
+    x_column = col1 if col1 else df.columns[0]
+    y_column = col2 if col2 else df.columns[1]
+    z_column = col3 if col3 else df.columns[2]
+    
+    # Verifica che le colonne esistano
+    missing_cols = [col for col in [x_column, y_column, z_column] if col not in df.columns]
+    if missing_cols:
+        print(f"Colonne mancanti nel DataFrame: {missing_cols}")
+        return
+    
+    fig, axes = plt.subplots(3, 1, figsize=(12, 10))
+    
+    # Plot prima colonna
+    axes[0].plot(range(len(df)), df[x_column], color='blue', linewidth=2, marker='o', markersize=2)
+    axes[0].set_title(f'{x_column}', fontsize=12)
+    axes[0].set_ylabel(x_column, fontsize=11)
+    axes[0].grid(True, alpha=0.3)
+    
+    # Plot seconda colonna  
+    axes[1].plot(range(len(df)), df[y_column], color='red', linewidth=2, marker='s', markersize=2)
+    axes[1].set_title(f'{y_column}', fontsize=12)
+    axes[1].set_ylabel(y_column, fontsize=11)
+    axes[1].grid(True, alpha=0.3)
+    
+    # Plot terza colonna
+    axes[2].plot(range(len(df)), df[z_column], color='green', linewidth=2, marker='^', markersize=2)
+    axes[2].set_title(f'{z_column}', fontsize=12)
+    axes[2].set_xlabel('Index', fontsize=11)
+    axes[2].set_ylabel(z_column, fontsize=11)
+    axes[2].grid(True, alpha=0.3)
+    
+    if title:
+        fig.suptitle(title, fontsize=16)
+    else:
+        fig.suptitle(f'Plot separati delle colonne: {x_column}, {y_column}, {z_column}', fontsize=14)
+    
+    plt.tight_layout()
+    plt.show()

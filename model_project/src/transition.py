@@ -131,9 +131,10 @@ def transition_matrix_computation(adj_df: pd.DataFrame, activity_df: pd.DataFram
 
     return df_transition, df_probabilities, df_initial
     
-def transition_computation(activity: str, scaler: str, threshold: float, eps: float, min_samples: int, dbscan_results: str, file_path: str):
+def transition_computation_dbscan(activity: str, scaler: str, threshold: float, k: int, eps: float, min_samples: int, file_path: str):
     
     #sub_df = pd.read_csv(file_path + f"/substantives/substantives_{activity}_{threshold}_{scaler}_eps{eps}_minsample{min_samples}.csv")
+    
     adj_df = pd.read_csv(file_path + f"/adjectives/adjectives_{activity}_{threshold}_{scaler}_eps{eps}_minsample{min_samples}.csv")
     activity_df = pd.read_csv(file_path + f"/all_points/dbscan_{activity}_{threshold}_{scaler}_eps{eps}_minsample{min_samples}.csv")
 
@@ -158,15 +159,42 @@ def transition_computation(activity: str, scaler: str, threshold: float, eps: fl
 
     return df_transition, df_probabilities, df_initial
 
+def transition_computation_kmeans(activity: str, scaler: str, threshold: float, k: int, file_path: str):
+    
+    #sub_df = pd.read_csv(file_path + f"/substantives/substantives_{activity}_{threshold}_{scaler}_eps{eps}_minsample{min_samples}.csv")
+    
+    adj_df = pd.read_csv(file_path + f"/adjectives/adjectives_{activity}_{threshold}_{scaler}_k{k}.csv")
+    activity_df = pd.read_csv(file_path + f"/all_points/kmeans_{activity}_{threshold}_{scaler}_k{k}.csv")
+
+    df_transition, df_probabilities, df_initial = transition_matrix_computation(adj_df, activity_df)
+
+    print("\n== Transition Matrix: ==")
+    #print(df_transition)
+    heatmap_plot(df_transition)
+
+    print("\n== Transition Probabilities: ==")
+    #print(df_probabilities)
+    heatmap_plot_probabilities(df_probabilities)
+
+    """print("\n== Initial State Probabilities: ==")
+    print(df_initial)"""
+
+    os.makedirs(config.RESULTS_DIR + f"/transition_results/{activity}/{scaler}", exist_ok=True)
+    df_transition.to_csv(config.RESULTS_DIR + f"/transition_results/{activity}/{scaler}/transition_matrix_{activity}_{threshold}_{scaler}_k{k}.csv")
+    df_probabilities.to_csv(config.RESULTS_DIR + f"/transition_results/{activity}/{scaler}/transition_probabilities_{activity}_{threshold}_{scaler}_k{k}.csv")
+    df_initial.to_csv(config.RESULTS_DIR + f"/transition_results/{activity}/{scaler}/initial_probabilities_{activity}_{threshold}_{scaler}_k{k}.csv", index=False)    
+    print(f"\nTransition results saved in {config.RESULTS_DIR}/transition_results/{activity}/{scaler}")
+
+    return df_transition, df_probabilities, df_initial
+
 if __name__ == "__main__":
     print("=== Transition Matrix Computation ===")
-    transition_computation(
+    transition_computation_kmeans(
         activity="sphereActivity",
         scaler="standard",
         threshold=0.75,
         eps=0.25,
         min_samples=8,
-        dbscan_results="dbscan_results_rotation",
         file_path=config.PROCESSED_DATA_DIR + "/dbscan_results_rotation/sphereActivity/standard"
     )
     exit(1) 

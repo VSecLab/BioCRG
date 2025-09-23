@@ -136,7 +136,7 @@ def scanning(df: pd.DataFrame, eps: float, min_samples: int, iter: int):
     print(" %3d | Tested with eps = %3s and min_samples = %3s | %3s %7s   | %5s" % (iter, eps, min_samples, number_of_clusters, number_of_outliers, cluster_info))
     
         
-    return(number_of_clusters, number_of_outliers)
+    return(number_of_clusters, number_of_outliers) 
     
 def dbscan_clustering(df: pd.DataFrame, eps: float = 0.5, min_samples: int = 5):
     """

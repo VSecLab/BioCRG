@@ -118,7 +118,7 @@ def plot_seg(username: str, features: list, activity: str, threshold: float, sca
     """
     plt.show()
 
-def lsv_segmentation(matrix: np.ndarray): 
+def lsv_segmentation_plot(matrix: np.ndarray): 
     length = matrix.shape[0]
     
     # first left singular vector
@@ -127,6 +127,12 @@ def lsv_segmentation(matrix: np.ndarray):
     # plot the first left singular vector
     plt.figure(figsize=(PLT_WIDTH, PLT_HEIGHT))
     plt.plot(range(length), lfv, marker='.', markersize=1.5, linewidth=0.8, color='blue', alpha=0.7)
+    
+    # Add horizontal lines at 0.2 and -0.2
+    plt.axhline(y=0.1, color='green', linestyle='-', linewidth=1, alpha=0.7, label='0.2')
+    plt.axhline(y=0, color='red', linestyle='-', linewidth=1, alpha=0.7, label='0')
+    plt.axhline(y=-0.1, color='purple', linestyle='-', linewidth=1, alpha=0.7, label='-0.2')
+    
     plt.title("First Left Singular Vector Over Time")
     plt.xlabel("Lenght of the Left Singular Vector")
     plt.ylabel("First Left Singular Vector")
@@ -213,6 +219,8 @@ def segmentation(df: pd.DataFrame, threshold: float):
         if ((segmentationIndex > threshold) and searchNewSegment): 
             # quando supero la threshold e non sono in un nuovo segmento vuol dire che ho trovato un nuovo segmento
             right_singular_vector = np.vstack([right_singular_vector, Vh[0, :].reshape(1, -1)])
+
+            # lsv_segmentation_plot(U)
             
             # Memorizza il vettore singolare sinistro nel dizionario
             lsv_dict["segNum_" + str(numberOfSegments)] = U[:, 0].copy()  # Salva il primo vettore singolare sinistro
@@ -461,7 +469,7 @@ def main():
     #plot_seg(username="grims", features=features, activity="sphereActivity", threshold=0.65, scaler="standard")
 
 def test_lsv(): 
-    threshold = 0.65
+    threshold = 0.6
     scaler = "standard"
 
     features = config.FEATURES
@@ -489,7 +497,7 @@ def test_lsv():
         # Reset index to start from 0
         df_log = df_log.reset_index(drop=True)
         
-        _, n, _, _, _ = segmentation(df_log, threshold=threshold)
+        _, n, _, _ = segmentation(df_log, threshold=threshold)
         print(f"Number of segments: {n}\n")
 
 def test(): 
