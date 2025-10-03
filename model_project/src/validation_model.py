@@ -7,8 +7,8 @@ from data_processing.src import config
 from scipy.stats import multivariate_normal
 
 
-def ghost_func(n: int, N: int, exp: int) -> float:
-    return np.exp(- (n ** exp) / N)
+def ghost_func(n: int, N: int, exp: int, states: int) -> float:
+    return np.exp(- states * (n ** exp) / N)
 
 def sequence_probability_ghost_state_end(group_df: pd.DataFrame, prob_matrix_df: pd.DataFrame, initial_probs_df: pd.DataFrame, exp: int = 4):
     group_df = group_df.sort_index()
@@ -25,6 +25,7 @@ def sequence_probability_ghost_state_end(group_df: pd.DataFrame, prob_matrix_df:
             print(f"State {state} not found in transition matrix.")
             return np.nan, N_states, ghost_count
         
+    states = len(prob_matrix_df.columns) - 1 
 
     if N_states == ghost_count:
         print(f"All states are ghost states. Returning 0 probability.")
@@ -34,7 +35,7 @@ def sequence_probability_ghost_state_end(group_df: pd.DataFrame, prob_matrix_df:
         return 0.0, N_states, ghost_count
 
     # Calcolo della penalità da applicare nei salti ghost
-    ghost_penalty = ghost_func(ghost_count, N_states, exp=exp)
+    ghost_penalty = ghost_func(ghost_count, N_states, exp=exp, states=states)
 
     print(f"N_states: {N_states} - Ghost Count: {ghost_count} - Ghost Penalty: {ghost_penalty}")
 
@@ -267,13 +268,22 @@ def segment_user(username:str, file_path: str, features: list, activity: str, sc
         return
     
 def compute_user_state(lsv_mean: dict, log_df: pd.DataFrame, adj_df: pd.DataFrame):
+
+    """
+    Compute the user state by matching mean adjectives with log data. 
+    Args:
+        lsv_mean (dict): A dictionary containing mean adjectives for each user and log.
+        log_df (pd.DataFrame): A DataFrame containing log information with columns ['LogNumber', 'Adjective', 'Label'].
+        adj_df (pd.DataFrame): A DataFrame containing adjectives with columns ['Label', 'Adjective'].
+    Returns:
+        pd.DataFrame: A DataFrame with matched states for each log entry.
+    """
     rows = []
 
     for username, logs in lsv_mean.items():
         for log_key, segs in logs.items():
             log_num = int(log_key.split("_")[1])  # "logNum_2" -> 2
             for seg_key, value in segs.items():
-
                 rows.append({
                     "Username": username,  # match con log_df
                     "LogNumber": float(log_num),

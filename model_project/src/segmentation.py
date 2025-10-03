@@ -145,46 +145,6 @@ def lsv_segmentation_plot(matrix: np.ndarray):
     plt.close()
     return 
 
-def compute_speed(matrix: np.ndarray):
-    length = matrix.shape[0]
-
-    speed = matrix[-1, 0] - matrix[0, 0]
-    speed = speed / (length - 1)
-
-    return speed
-
-def compute_segmentation_index(df: pd.DataFrame): 
-    """
-    This function calculates the segmentation index using Singular Value Decomposition (SVD) on the data matrix.
-    Args:
-        df (pd.DataFrame): DataFrame containing the data to compute the segmentation index.
-    Returns:
-        list: A list of segmentation indices for each row in the DataFrame.
-    """
-
-    segmentationMatrix = np.empty((0, df.shape[1] - 1), float) 
-    segmentationIndexList = []
-    sigma1 = 0
-    sigma2 = 0
-    i = 0
-
-    for row in df.values:
-        segmentationMatrix = np.vstack([segmentationMatrix, row[1:]])
-        
-        U, S, Vh = svd(segmentationMatrix, full_matrices=True)
-        
-        sigma1 = S[0]
-        if len(S) > 1:
-            sigma2 = S[1]
-        else: 
-            sigma2 = 0
-
-        segmentationIndex = sigma2 / sigma1
-
-        segmentationIndexList.append(segmentationIndex)
-        i += 1
-    return segmentationIndexList
-
 def segmentation(df: pd.DataFrame, threshold: float): 
 
     segmentationMatrix = np.empty((0, df.shape[1] - 1), float) 
@@ -241,7 +201,6 @@ def segmentation(df: pd.DataFrame, threshold: float):
     right_singular_vector = np.vstack([right_singular_vector, Vh[0, :].reshape(1, -1)])
     # Memorizza il vettore singolare sinistro dell'ultimo segmento
     lsv_dict["segNum_" + str(numberOfSegments)] = U[:, 0].copy()
-    tmp = compute_speed(matrix=U)
 
     return segmentationIndexList, numberOfSegments, right_singular_vector, lsv_dict
 
@@ -308,7 +267,7 @@ def segmentation_on_activity(file_path: str, features: list, activity: str, thre
     
 def segment_all_users(activity: str, features: list, threshold: float, scaler: str, filepath: str): 
     """ 
-    Try segmentation for all users in the raw data directory and save results to a CSV file.
+    Segmentation for all users in the raw data directory and save results to a CSV file.
     Args:
         activity (str): Activity to filter by.
         threshold (float): Threshold value for segmentation.
@@ -323,7 +282,6 @@ def segment_all_users(activity: str, features: list, threshold: float, scaler: s
     rsv_usernames = []
     segmentation_list = []
     lsv_all_users = {}  # Dizionario per memorizzare i LSV per tutti gli utenti
-
     
     all_files = config.get_all_files()
     
@@ -520,31 +478,9 @@ def test():
         )
     print(lsv_all_user)
     
-
 if __name__ == "__main__":
     print("====== Segmentation Module ======")
     #main()
 
     test()
     exit(1)
-    
-
-"""
-BUONI RISULTATI:
-
----
-sphereActivity - robust - 0.5 
-sphereActivity - robust - 0.6
-
-
-sphereActivity - standard - 0.6
-sphereActivity - standard - 0.65
-sphereActivity - standard - 0.7
-
-sphereActivity - minmax (peggiore)
-
-sphereActivity - quantile - 0.3
----
-
-... 
-"""

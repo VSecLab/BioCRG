@@ -66,7 +66,7 @@ def adjectives_dict(best_labels: np.array, lsv_all_user: dict, df_origin: pd.Dat
         df_origin (pd.DataFrame): Original DataFrame containing 'Username', 'LogNumber', and other relevant columns.
 
     Returns:
-        dict: A dictionary where keys are cluster labels and values are lists of LSVs belonging to that cluster.
+        dict: A dictionary where keys are cluster labels and values are lists of LSVs corresponding to that cluster.
     """
     lsv_clusters_dict = {}
     print("Creating LSV clusters dictionary...")
