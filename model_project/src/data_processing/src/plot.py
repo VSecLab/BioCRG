@@ -106,7 +106,7 @@ def plot_segmentation_index(segmentationIndexList: list, threshold: float):
     # Customize grid with more vertical lines
     ax = plt.gca()
     ax.grid(True, alpha=0.3)
-    ax.set_xticks(np.arange(0, len(segmentationIndexList), max(1, len(segmentationIndexList)//50)))
+    #ax.set_xticks(np.arange(0, len(segmentationIndexList), max(1, len(segmentationIndexList)//50)))
     ax.grid(True, which='minor', alpha=0.2, linestyle='--')
     ax.minorticks_on()
     

@@ -11,6 +11,7 @@ import data_processing.src.plot as plot
 MIN_NUMBER_SAMPLES = config.MIN_NUMBER_SAMPLES 
 PLT_WIDTH = 16
 PLT_HEIGHT = 6
+     
 
 def plot_segmentation_for_all_logs(df: pd.DataFrame, activity: str, features: list, threshold: float):
     """
@@ -36,7 +37,7 @@ def plot_segmentation_for_all_logs(df: pd.DataFrame, activity: str, features: li
         df_log = etl.filter_data_on_log_number(df, log_number=log_number)
         df_log = etl.filter_data_on_features(df_log, features=features)
         
-        if df_log.empty or df_log.shape[0] < MIN_NUMBER_SAMPLES:
+        if df_log.empty:
             print(f"No data found for log number {log_number}")
             continue
         
@@ -46,7 +47,7 @@ def plot_segmentation_for_all_logs(df: pd.DataFrame, activity: str, features: li
         print(f"Processing log number {log_number}, shape: {df_log.shape}")
         
         # Compute segmentation index
-        segmentation_index_list, numberOfSegments, _, _, _ = segmentation(df_log, threshold)
+        segmentation_index_list, numberOfSegments, _, _ = segmentation(df_log, threshold)
         
         # Plot with different color for each log number
         plt.plot(range(len(segmentation_index_list)), segmentation_index_list, 
@@ -74,6 +75,211 @@ def plot_segmentation_for_all_logs(df: pd.DataFrame, activity: str, features: li
     
     plt.tight_layout()
 
+def plot_segmentation_separate_figures(df: pd.DataFrame, activity: str, features: list, threshold: float):
+    """
+    Plot segmentation index for all log numbers in separate figures (one figure per log).
+    
+    Args:
+        df (pd.DataFrame): DataFrame containing the data to plot
+        activity (str): Activity to filter by
+        features (list): List of features to include
+        threshold (float): Threshold value for segmentation
+    """
+    unique_log_numbers = sorted(df['LogNumber'].unique())
+    print(f"Found {len(unique_log_numbers)} unique log numbers: {unique_log_numbers}")
+    
+    for log_number in unique_log_numbers:
+        # Filter data for current log number
+        df_log = etl.filter_data_on_log_number(df, log_number=log_number)
+        df_log = etl.filter_data_on_features(df_log, features=features)
+        
+        if df_log.empty:
+            print(f"No data found for log number {log_number}")
+            continue
+        
+        # Reset index to start from 0
+        df_log = df_log.reset_index(drop=True)
+        
+        print(f"Processing log number {log_number}, shape: {df_log.shape}")
+        
+        # Compute segmentation index
+        segmentation_index_list, numberOfSegments, _, _ = segmentation(df_log, threshold)
+        
+        # Create a new figure for each log
+        plt.figure(figsize=(PLT_WIDTH, PLT_HEIGHT))
+        
+        # Plot segmentation index
+        plt.plot(range(len(segmentation_index_list)), segmentation_index_list, 
+                marker='.', 
+                markersize=2, 
+                linewidth=1, 
+                color='blue', 
+                alpha=0.8)
+        
+        # Add threshold line
+        plt.axhline(y=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold ({threshold})')
+        
+        # Customize the plot
+        plt.title(f'Segmentation Index Over Time - Log {log_number}\nActivity: {activity}, Segments: {numberOfSegments}')
+        plt.xlabel('Frames')
+        plt.ylabel('Segmentation Index')
+        plt.legend()
+        
+        # Customize grid
+        ax = plt.gca()
+        ax.grid(True, alpha=0.3)
+        ax.grid(True, which='minor', alpha=0.2, linestyle='--')
+        ax.minorticks_on()
+        
+        plt.tight_layout()
+        plt.show()
+
+def plot_user_executions_separate(username: str, activity: str, threshold: float, scaler: str = 'minmax'):
+    """
+    Plot segmentation index for all executions of a specified user in separate figures.
+    
+    Args:
+        username (str): Username to plot executions for
+        activity (str): Activity to filter by
+        threshold (float): Threshold value for segmentation
+        scaler (str): Scaler type to use ('minmax', 'standard', etc.)
+    """
+    print(f"Starting segmentation plot for user: {username}\n")
+
+    file_path = config.find_file_from_username(username=username)
+    features = ['Timestamp','HeadPosX','HeadPosY','HeadPosZ','HeadRotX','HeadRotY','HeadRotZ',
+                'RightPosX','RightPosY','RightPosZ','RightRotX','RightRotY','RightRotZ',
+                'LeftPosX','LeftPosY','LeftPosZ','LeftRotX','LeftRotY','LeftRotZ']
+    
+    base_df = etl.load_data(file_path)
+
+    # Normalize position and rotation separately and only on the specified activity
+    df = etl.filter_data_on_activity(df=base_df, activity=activity).dropna()
+    df = etl.scaler_on_postion_and_rotation(df=df, 
+                                          position_features=config.POSITION_FEATURES, 
+                                          rotation_features=config.ROTATION_FEATURES, 
+                                          scaler_type=scaler)
+
+    print(f"DataFrame after separate normalization: \n {df.tail()}\n")
+    
+    if df.empty:
+        print(f"No data found for activity '{activity}' and user '{username}'.")
+        return
+
+    df = df.reset_index(drop=True)    
+    
+    print(f"Plotting separate figures for each execution of user '{username}'\n")
+    plot_segmentation_separate_figures(df, activity, features[1:], threshold)
+
+def plot_two_users_comparison(username1: str, log_number1: int, username2: str, log_number2: int, 
+                             activity: str, threshold: float, scaler: str = 'minmax'):
+    """
+    Plot segmentation index comparison between two users with specified log numbers overlapped.
+    
+    Args:
+        username1 (str): First username
+        log_number1 (int): Log number for first user
+        username2 (str): Second username  
+        log_number2 (int): Log number for second user
+        activity (str): Activity to filter by
+        threshold (float): Threshold value for segmentation
+        scaler (str): Scaler type to use ('minmax', 'standard', etc.)
+    """
+    print(f"Starting segmentation comparison between users: {username1} (log {log_number1}) vs {username2} (log {log_number2})\n")
+
+    features = ['Timestamp','HeadPosX','HeadPosY','HeadPosZ','HeadRotX','HeadRotY','HeadRotZ',
+                'RightPosX','RightPosY','RightPosZ','RightRotX','RightRotY','RightRotZ',
+                'LeftPosX','LeftPosY','LeftPosZ','LeftRotX','LeftRotY','LeftRotZ']
+
+    # Load data for first user
+    file_path1 = config.find_file_from_username(username=username1)
+    base_df1 = etl.load_data(file_path1)
+    df1 = etl.filter_data_on_activity(df=base_df1, activity=activity).dropna()
+    df1 = etl.scaler_on_postion_and_rotation(df=df1, 
+                                            position_features=config.POSITION_FEATURES, 
+                                            rotation_features=config.ROTATION_FEATURES, 
+                                            scaler_type=scaler)
+    
+    # Load data for second user  
+    file_path2 = config.find_file_from_username(username=username2)
+    base_df2 = etl.load_data(file_path2)
+    df2 = etl.filter_data_on_activity(df=base_df2, activity=activity).dropna()
+    df2 = etl.scaler_on_postion_and_rotation(df=df2, 
+                                            position_features=config.POSITION_FEATURES, 
+                                            rotation_features=config.ROTATION_FEATURES, 
+                                            scaler_type=scaler)
+
+    # Filter by specific log numbers
+    df1_log = etl.filter_data_on_log_number(df1, log_number=log_number1)
+    df1_log = etl.filter_data_on_features(df1_log, features=features[1:])
+    
+    df2_log = etl.filter_data_on_log_number(df2, log_number=log_number2)
+    df2_log = etl.filter_data_on_features(df2_log, features=features[1:])
+
+    # Check if data exists
+    if df1_log.empty:
+        print(f"No sufficient data found for user '{username1}' with log number {log_number1}")
+        return
+        
+    if df2_log.empty:
+        print(f"No sufficient data found for user '{username2}' with log number {log_number2}")
+        return
+
+    # Reset indices
+    df1_log = df1_log.reset_index(drop=True)
+    df2_log = df2_log.reset_index(drop=True)
+
+    print(f"User '{username1}' log {log_number1} shape: {df1_log.shape}")
+    print(f"User '{username2}' log {log_number2} shape: {df2_log.shape}")
+
+    # Compute segmentation indices
+    seg_index_list1, num_segments1, _, _ = segmentation(df1_log, threshold)
+    seg_index_list2, num_segments2, _, _ = segmentation(df2_log, threshold)
+
+    # Create the comparison plot
+    plt.figure(figsize=(PLT_WIDTH, PLT_HEIGHT))
+    
+    # Plot first user in blue
+    plt.plot(range(len(seg_index_list1)), seg_index_list1,
+            marker='.', 
+            markersize=2, 
+            linewidth=1.2, 
+            color='blue', 
+            alpha=0.8,
+            label=f'{username1} - Log {log_number1} ({num_segments1} segments)')
+    
+    # Plot second user in orange
+    plt.plot(range(len(seg_index_list2)), seg_index_list2,
+            marker='.', 
+            markersize=2, 
+            linewidth=1.2, 
+            color='orange', 
+            alpha=0.8,
+            label=f'{username2} - Log {log_number2} ({num_segments2} segments)')
+
+    # Add threshold line in red
+    plt.axhline(y=threshold, color='red', linestyle='--', linewidth=2, 
+               label=f'Threshold ({threshold})')
+
+    # Customize the plot
+    plt.title(f'Segmentation Index Comparison\nActivity: {activity}\n{username1} (Log {log_number1}) vs {username2} (Log {log_number2})')
+    plt.xlabel('Frames')
+    plt.ylabel('Segmentation Index')
+    plt.legend()
+
+    # Customize grid
+    ax = plt.gca()
+    ax.grid(True, alpha=0.3)
+    ax.grid(True, which='minor', alpha=0.2, linestyle='--')
+    ax.minorticks_on()
+
+    plt.tight_layout()
+    plt.show()
+    
+    print(f"\nComparison completed:")
+    print(f"- {username1} (log {log_number1}): {num_segments1} segments, {len(seg_index_list1)} frames")
+    print(f"- {username2} (log {log_number2}): {num_segments2} segments, {len(seg_index_list2)} frames")
+
 def plot_seg(username: str, features: list, activity: str, threshold: float, scaler: str): 
 
     print("Starting segmentation test...\n")
@@ -98,7 +304,8 @@ def plot_seg(username: str, features: list, activity: str, threshold: float, sca
 
     df = df.reset_index(drop=True)    
     
-    plot_segmentation_for_all_logs(df, activity, features[1:], threshold)
+    #plot_segmentation_for_all_logs(df, activity, features[1:], threshold)
+    plot_segmentation_separate_figures(df, activity, features[1:], threshold)
 
     # ------------ #
     """
@@ -243,7 +450,7 @@ def segmentation_on_activity(file_path: str, features: list, activity: str, thre
         df_log = etl.filter_data_on_log_number(df, log_number=log_number)
         df_log = etl.filter_data_on_features(df_log, features=features)
         
-        if df_log.empty or df_log.shape[0] < MIN_NUMBER_SAMPLES:
+        if df_log.empty:
             print(f"No data found for log number {log_number}")
             continue
         
@@ -426,6 +633,52 @@ def main():
     
     #plot_seg(username="grims", features=features, activity="sphereActivity", threshold=0.65, scaler="standard")
 
+def test_lsv_with_plot(): 
+    """
+    Test function that uses lsv_segmentation_plot() function to plot LSV vectors.
+    """
+    threshold = 0.6
+    scaler = "standard"
+
+    features = config.FEATURES
+    tmp = "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/raw/grims/grims_log_20250719_1148_1YAYXWAD50.csv"
+    base_df = etl.load_data(tmp)
+    df = etl.filter_data_on_activity(df=base_df, activity="sphereActivity").dropna()
+    df = etl.scaler_on_postion_and_rotation(df=df, position_features=config.POSITION_FEATURES, rotation_features=config.ROTATION_FEATURES, scaler_type=scaler)
+    
+    df = df.reset_index(drop=True)  
+
+    unique_log_numbers = sorted(df['LogNumber'].unique())
+
+    for i, log_number in enumerate(unique_log_numbers):
+        
+        # Filter data for the current log number and features
+        df_log = etl.filter_data_on_log_number(df, log_number=log_number)
+        df_log = etl.filter_data_on_features(df_log, features=features[1:])
+        
+        if df_log.empty:
+            print(f"No data found for log number {log_number}")
+            continue
+        
+        # Reset index to start from 0
+        df_log = df_log.reset_index(drop=True)
+        
+        # Perform segmentation and get LSV dictionary
+        _, n, _, lsv_dict = segmentation(df_log, threshold=threshold)
+        print(f"Log Number {log_number}: Number of segments: {n}")
+        
+        # Plot LSV for each segment using the existing function
+        for segment_name, lsv_vector in lsv_dict.items():
+            print(f"Plotting segment: {segment_name} (shape: {lsv_vector.shape})")
+            
+            # Create a matrix with the LSV as the first column (as expected by lsv_segmentation_plot)
+            lsv_matrix = lsv_vector.reshape(-1, 1)
+            
+            # Use the existing lsv_segmentation_plot function
+            lsv_segmentation_plot(lsv_matrix)
+        
+        print(f"Completed plotting for log number {log_number}\n")
+
 def test_lsv(): 
     threshold = 0.6
     scaler = "standard"
@@ -448,15 +701,46 @@ def test_lsv():
         df_log = etl.filter_data_on_log_number(df, log_number=log_number)
         df_log = etl.filter_data_on_features(df_log, features=features[1:])
         
-        if df_log.empty or df_log.shape[0] < MIN_NUMBER_SAMPLES:
+        if df_log.empty:
             print(f"No data found for log number {log_number}")
             continue
         
         # Reset index to start from 0
         df_log = df_log.reset_index(drop=True)
         
-        _, n, _, _ = segmentation(df_log, threshold=threshold)
-        print(f"Number of segments: {n}\n")
+        # Perform segmentation and get LSV dictionary
+        _, n, _, lsv_dict = segmentation(df_log, threshold=threshold)
+        print(f"Log Number {log_number}: Number of segments: {n}")
+        
+        # Plot LSV for each segment
+        for segment_name, lsv_vector in lsv_dict.items():
+            print(f"Plotting segment: {segment_name} (shape: {lsv_vector.shape})")
+            
+            # Create a matrix with the LSV as the first column for plotting
+            lsv_matrix = lsv_vector.reshape(-1, 1)
+            
+            # Plot using lsv_segmentation_plot function
+            plt.figure(figsize=(8, 6))
+            plt.plot(range(len(lsv_vector)), lsv_vector, marker='.', markersize=1.5, linewidth=0.8, color='blue', alpha=0.7)
+            
+            # Add horizontal lines at thresholds
+            plt.axhline(y=0.1, color='green', linestyle='-', linewidth=1, alpha=0.7, label='0.1')
+            plt.axhline(y=0, color='red', linestyle='-', linewidth=1, alpha=0.7, label='0')
+            plt.axhline(y=-0.1, color='purple', linestyle='-', linewidth=1, alpha=0.7, label='-0.1')
+            
+            plt.title(f"Left Singular Vector - Log {log_number}, {segment_name}")
+            plt.xlabel("Length of the Left Singular Vector")
+            plt.ylabel("First Left Singular Vector")
+            plt.legend()
+            ax = plt.gca()
+            ax.grid(True, alpha=0.3)
+            ax.grid(True, which='minor', alpha=0.2, linestyle='--')
+            ax.minorticks_on()
+            plt.tight_layout()
+            plt.show()
+            plt.close()
+        
+        print(f"Completed plotting for log number {log_number}\n")
 
 def test(): 
     threshold = 0.7
@@ -481,6 +765,9 @@ def test():
 if __name__ == "__main__":
     print("====== Segmentation Module ======")
     #main()
+    test_lsv()
 
-    test()
+    # plot_seg(username="rkiper", features=config.FEATURES, activity="sphereActivity", threshold=0.6, scaler="standard")
+    #plot_two_users_comparison(username1="grims", log_number1=2, username2="rkiper", log_number2=2, activity="sphereActivity", threshold=0.6, scaler="standard")
+    
     exit(1)

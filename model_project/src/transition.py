@@ -75,6 +75,7 @@ def transition_matrix_computation(adj_df: pd.DataFrame, activity_df: pd.DataFram
     grouped = activity_df.groupby(['Username', 'LogNumber'])
 
     initial_states = []
+    sequence_lengths = []  # Lista per memorizzare la lunghezza di ogni sequenza
 
     # per ogni gruppo
     for _, group in grouped:
@@ -105,6 +106,9 @@ def transition_matrix_computation(adj_df: pd.DataFrame, activity_df: pd.DataFram
             if matched_state and matched_state in state_index_map:
                 states.append(matched_state)
 
+        # Memorizza la lunghezza della sequenza
+        sequence_lengths.append(len(states))
+
         # conta le transizioni
         for i in range(len(states) - 1):
             from_idx = state_index_map[states[i]]
@@ -113,6 +117,13 @@ def transition_matrix_computation(adj_df: pd.DataFrame, activity_df: pd.DataFram
 
     counter = Counter(initial_states)
     total = sum(counter.values())
+
+    # Calcola il numero medio di stati per sequenza
+    avg_states_per_sequence = np.mean(sequence_lengths) if sequence_lengths else 0
+    print(f"Average: {avg_states_per_sequence:.2f}")
+    print(f"Total sequences: {len(sequence_lengths)}")
+    print(f"Minimum sequence length: {min(sequence_lengths) if sequence_lengths else 0}")
+    print(f"Maximum sequence length: {max(sequence_lengths) if sequence_lengths else 0}")
 
     # Probabilità iniziali
     initial_prob_vector = np.array([counter.get(state, 0) / total for state in state_list])
@@ -129,16 +140,25 @@ def transition_matrix_computation(adj_df: pd.DataFrame, activity_df: pd.DataFram
 
     df_probabilities = compute_transition_probabilities(df_transition=df_transition)
 
-    return df_transition, df_probabilities, df_initial
+    # Crea un dizionario con le statistiche delle sequenze
+    sequence_stats = {
+        'avg_states_per_sequence': avg_states_per_sequence,
+        'total_sequences': len(sequence_lengths),
+        'min_sequence_length': min(sequence_lengths) if sequence_lengths else 0,
+        'max_sequence_length': max(sequence_lengths) if sequence_lengths else 0,
+        'sequence_lengths': sequence_lengths
+    }
+
+    return df_transition, df_probabilities, df_initial, sequence_stats
     
-def transition_computation_dbscan(activity: str, scaler: str, threshold: float, k: int, eps: float, min_samples: int, file_path: str):
+def transition_computation_dbscan(activity: str, scaler: str, threshold: float, eps: float, min_samples: int, file_path: str):
     
     #sub_df = pd.read_csv(file_path + f"/substantives/substantives_{activity}_{threshold}_{scaler}_eps{eps}_minsample{min_samples}.csv")
     
     adj_df = pd.read_csv(file_path + f"/adjectives/adjectives_{activity}_{threshold}_{scaler}_eps{eps}_minsample{min_samples}.csv")
     activity_df = pd.read_csv(file_path + f"/all_points/dbscan_{activity}_{threshold}_{scaler}_eps{eps}_minsample{min_samples}.csv")
 
-    df_transition, df_probabilities, df_initial = transition_matrix_computation(adj_df, activity_df)
+    df_transition, df_probabilities, df_initial, sequence_stats = transition_matrix_computation(adj_df, activity_df)
 
     print("\n== Transition Matrix: ==")
     #print(df_transition)
@@ -157,7 +177,7 @@ def transition_computation_dbscan(activity: str, scaler: str, threshold: float, 
     df_initial.to_csv(config.RESULTS_DIR + f"/transition_results/{activity}/{scaler}/initial_probabilities_{activity}_{threshold}_{scaler}_eps{eps}_minsample{min_samples}.csv", index=False)    
     print(f"\nTransition results saved in {config.RESULTS_DIR}/transition_results/{activity}/{scaler}")
 
-    return df_transition, df_probabilities, df_initial
+    return df_transition, df_probabilities, df_initial, sequence_stats
 
 def transition_computation_kmeans(activity: str, scaler: str, threshold: float, k: int, file_path: str):
     
@@ -166,7 +186,7 @@ def transition_computation_kmeans(activity: str, scaler: str, threshold: float, 
     adj_df = pd.read_csv(file_path + f"/adjectives/adjectives_{activity}_{threshold}_{scaler}_k{k}.csv")
     activity_df = pd.read_csv(file_path + f"/all_points/kmeans_{activity}_{threshold}_{scaler}_k{k}.csv")
 
-    df_transition, df_probabilities, df_initial = transition_matrix_computation(adj_df, activity_df)
+    df_transition, df_probabilities, df_initial, sequence_stats = transition_matrix_computation(adj_df, activity_df)
 
     print("\n== Transition Matrix: ==")
     #print(df_transition)
@@ -185,7 +205,7 @@ def transition_computation_kmeans(activity: str, scaler: str, threshold: float, 
     df_initial.to_csv(config.RESULTS_DIR + f"/transition_results/{activity}/{scaler}/initial_probabilities_{activity}_{threshold}_{scaler}_k{k}.csv", index=False)    
     print(f"\nTransition results saved in {config.RESULTS_DIR}/transition_results/{activity}/{scaler}")
 
-    return df_transition, df_probabilities, df_initial
+    return df_transition, df_probabilities, df_initial, sequence_stats
 
 if __name__ == "__main__":
     print("=== Transition Matrix Computation ===")

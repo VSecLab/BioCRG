@@ -1,4 +1,5 @@
 import os 
+import math
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -57,15 +58,17 @@ def kmeans_with_outlier_detection(df: pd.DataFrame, K: int):
     Returns:
         np.ndarray: An array of cluster labels where smaller clusters are labeled as -1 (outliers).
     """
-    import math
+    
     
     # Perform KMeans clustering
     kmeans = KMeans(n_clusters=K, random_state=42).fit(df)
     labels = kmeans.labels_.copy()
     
     # Calculate x = K/2 (rounded up)
-    x = math.ceil(K / 2)
-    
+    #x = math.ceil(K / 2)
+    #outliers = math.ceil(K / 3)
+    outliers = math.ceil(K / 2)
+    x = K - outliers
     # Count the number of elements in each cluster
     unique_labels, counts = np.unique(labels, return_counts=True)
     cluster_sizes = dict(zip(unique_labels, counts))

@@ -1,4 +1,5 @@
 import os
+import math
 import numpy as np 
 import pandas as pd
 import segmentation as sg
@@ -8,9 +9,10 @@ from scipy.stats import multivariate_normal
 
 
 def ghost_func(n: int, N: int, exp: int, states: int) -> float:
-    return np.exp(- states * (n ** exp) / N)
+    m = math.ceil(states / N)
+    return np.exp(- (m) * (n ** exp) / N)
 
-def sequence_probability_ghost_state_end(group_df: pd.DataFrame, prob_matrix_df: pd.DataFrame, initial_probs_df: pd.DataFrame, exp: int = 4):
+def sequence_probability_ghost_state_end(group_df: pd.DataFrame, prob_matrix_df: pd.DataFrame, initial_probs_df: pd.DataFrame, states: int, exp: int = 4, avg_sequence_length: int = 1):
     group_df = group_df.sort_index()
 
     sequence = group_df['MatchedState'].tolist()
@@ -25,7 +27,7 @@ def sequence_probability_ghost_state_end(group_df: pd.DataFrame, prob_matrix_df:
             print(f"State {state} not found in transition matrix.")
             return np.nan, N_states, ghost_count
         
-    states = len(prob_matrix_df.columns) - 1 
+    
 
     if N_states == ghost_count:
         print(f"All states are ghost states. Returning 0 probability.")
@@ -35,9 +37,9 @@ def sequence_probability_ghost_state_end(group_df: pd.DataFrame, prob_matrix_df:
         return 0.0, N_states, ghost_count
 
     # Calcolo della penalità da applicare nei salti ghost
-    ghost_penalty = ghost_func(ghost_count, N_states, exp=exp, states=states)
+    ghost_penalty = ghost_func(ghost_count, N_states, exp=exp, states=avg_sequence_length)
 
-    print(f"N_states: {N_states} - Ghost Count: {ghost_count} - Ghost Penalty: {ghost_penalty}")
+    print(f"N_states: {N_states} - Ghost Count: {ghost_count} - Ghost Penalty: {ghost_penalty} - States: {states}")
 
     # Calcolo probabilità iniziale
     init_prob_map = dict(zip(initial_probs_df['State'], initial_probs_df['Initial_Probability']))

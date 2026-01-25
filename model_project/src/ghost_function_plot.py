@@ -1,14 +1,15 @@
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 
 # Inserisci i parametri
-m = 2
-k = 2
-N = 100
+k = 4
+N = 3
+m = math.ceil(22/N)
 
 # Definizione della funzione
 def Gf(n, m, k, N):
-    return np.exp(-m * (n**k) / N)
+    return np.exp(-m * (n**k / N))
 
 t = 25
 # Range di n
@@ -18,6 +19,8 @@ n_points = np.arange(1, t)       # punti interi 1..25
 # Calcolo
 y_vals = Gf(n_vals, m, k, N)
 y_points = Gf(n_points, m, k, N)
+
+print(f"Gf(2) = {Gf(2, m, k, N)}")
 
 # Plot
 plt.figure(figsize=(16,8))

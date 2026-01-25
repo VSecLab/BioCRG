@@ -163,7 +163,6 @@ def segment_lsv(lsv_vector: np.ndarray):
 
     return subsequences
 
-
 def adjectives_segmentation(lsv_clusters_dict: dict):
     """
     Segments LSVs in each cluster into four categories based on thresholds:
@@ -207,7 +206,6 @@ def adjectives_segmentation(lsv_clusters_dict: dict):
     
     return clusters
             
-
 def generalize_adjectives(clusters: dict):
     """
     Generalizes the segmented LSVs in each cluster by computing the mean vector for each adjective type.
