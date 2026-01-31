@@ -2,14 +2,28 @@ from node import TreeNode
 from tree import Tree
 import random
 
-def random_seq():
+L = 4  # Max length of the suffix tree
+Pmin = 0.000001
+gamma_min = 0.0
+eps = 0.0
+
+
+def random_seq(nos:5):
     sequences = []
-    for _ in range(5):
+    for _ in range(nos):
         sequence = ''.join(random.choice(['a', 'b']) for _ in range(10))
         sequences.append(sequence)
     return sequences
 
-def add_node(node_value, prob: None, father_node: TreeNode):
+def define_border(alphabet, contexts_prob): 
+    border = []
+    for a in alphabet: 
+        a_prob = contexts_prob.get(a, 0)
+        if a_prob > Pmin:  # Threshold for including in the border
+            border.append(a)
+    return border
+
+def add_node(node_value, prob, father_node: TreeNode):
     tmp_node = TreeNode(value=node_value, prob=prob, suffix=father_node.value)
     father_node.addChild(tmp_node)
     print(f"Added node '{node_value}' under father node '{father_node.value}'")
@@ -32,10 +46,57 @@ def find_father_suffix(s):
     """
     return s[1:]
 
-def compute_context_probabilities(border, sequences):
+def border_expansion(suffix_tree, border, s, alphabet, emp): 
+    # border expansion 
+    if len(s) < L:
+        for a in alphabet:
+            new_suffix = a + s
+
+            # probability check 
+            p_new_suffix = get_context_probabilities(emp).get(new_suffix, 0)
+            if p_new_suffix > Pmin and new_suffix not in border:
+
+                border.append(new_suffix)
+                print(f"Border expanded: {border}")
+
+def add_suffixes_and_node(suffix_tree, s, emp):
+    all_suffixes = find_all_suffixes(s)[::-1]
+    if len(all_suffixes) == 0 and not suffix_tree.search_node(s):
+        # there are no suffixes to add
+        father_node = suffix_tree.root
+        add_node(node_value=s, prob=emp.get(s, (0, {})), father_node=father_node)
+        return
+    elif not suffix_tree.search_node(s): 
+        for x in all_suffixes:
+            find = suffix_tree.search_node(x)
+            if not find:
+                print(f"Adding suffix '{x}' to the tree - suffix: {x[1:]}")
+                if x[1:] == "":
+                    father_node = suffix_tree.root
+                else:
+                    father_node = suffix_tree.find_father_node(x[1:])
+                add_node(node_value=x, prob=emp.get(x, (0, {})), father_node=father_node)
+        father_node = suffix_tree.find_father_node(s[1:])
+        add_node(node_value=s, prob=emp.get(s, (0, {})), father_node=father_node)  
+
+def significativity_test(s, emp, parent_suffix, alphabet): 
+    find = False 
+    for a in alphabet:
+        conditional_prob = get_single_conditional_prob(emp=emp, s=s, sigma=a)
+        parent_cond_prob = get_single_conditional_prob(emp=emp, s=parent_suffix, sigma=a)
+        #print(f"Significativity test for suffix '{s}' with symbol '{a}': P({a}|{s}) = {conditional_prob}, P({a}|{parent_suffix}) = {parent_cond_prob}")
+        if (parent_cond_prob == 0) and (conditional_prob > gamma_min):
+            find = True
+            break
+        elif conditional_prob > gamma_min and (conditional_prob / parent_cond_prob) > (1 + eps):    
+            find = True
+            break
+    return find
+
+def compute_context_probabilities(contexts, sequences):
     """ The probabilities of contextes are used only to filter rare contexts."""
-    s_prob = {s: 0.0 for s in border}
-    for s in border:
+    s_prob = {s: 0.0 for s in contexts}
+    for s in contexts:
         len_s = len(s)
         window_size = 0
         cont = 0
@@ -56,74 +117,181 @@ def compute_context_probabilities(border, sequences):
         s_prob[s] = p_s
         print(f"Probability of suffix '{s}': {p_s}\n")
     return s_prob
-         
-def main(): 
-    alphabet = ['a', 'b']
-    border = {"a", "b", "aa", "ab", "ba", "bb"} # just for the probabilities used fot the significativity test
 
-    sequences = random_seq()
+def get_single_conditional_prob(emp, s, sigma):
+    """
+    Extract the conditional probability P(sigma|s) from the empirical probabilities dictionary.
+    
+    Args:
+        emp: Dictionary where each value is a tuple (prob, conditional_probs)
+        s: The context string
+        sigma: The symbol for which to get the conditional probability
+    Returns:
+        The conditional probability P(sigma|s)
+    """
+    if s in emp:
+        _, conditional_probs = emp[s]
+        return conditional_probs.get(sigma, 0.0)
+    return 0.0
+    
+def get_conditional_probabilities(emp):
+    """
+    Extract conditional probabilities from the empirical probabilities dictionary.
+    
+    Args:
+        emp: Dictionary where each value is a tuple (prob, conditional_probs)
+    Returns:
+        Dictionary mapping context to its conditional probabilities P(sigma|s)
+    """
+    cond_probs = {}
+    for context, (_, conditional_probs) in emp.items():
+        cond_probs[context] = conditional_probs
+    return cond_probs
+
+def get_context_probabilities(emp):
+    """
+    Extract context probabilities from the empirical probabilities dictionary.
+    
+    Args:
+        emp: Dictionary where each value is a tuple (prob, conditional_probs)
+    
+    Returns:
+        Dictionary mapping context to its probability P(s)
+    """
+    context_probs = {}
+    for context, (prob, _) in emp.items():
+        context_probs[context] = prob
+    return context_probs
+
+def empirical_probs(context_occ, sequences, alphabet):
+    """
+        Compute empirical probabilities for all contexts:
+        P(s) = #s / total_windows
+        P(sigma|s) = #(sigma * s) / #s for each sigma in the alphabet.
+    """
+    emp = {}
+    for context, count in context_occ.items():
+        scp = single_context_prob(context, count, sequences)
+        pss = single_conditional_probs(context, context_occ, alphabet)
+        emp[context] = (scp, pss)
+        print(f"Context: '{context}', P(s): {scp}, P(sigma|s): {pss}")
+    return emp
+
+def single_conditional_probs(context, context_occ, alphabet):
+    """
+        for the given context s, compute P(sigma|context) = #(sigma * s) / #s for each sigma in the alphabet.
+        Where #(sigma * s) is the number of occurrences of the extended context (sigma + s) and #s is the number of occurrences of s.
+
+    """
+    p_sigma_s = {}
+    for sigma in alphabet:
+        extended_context = sigma + context
+        context_count = context_occ.get(context, 0)
+        extended_count = context_occ.get(extended_context, 0)
+
+        if context_count > 0:
+            p_sigma_given_s = extended_count / context_count
+        else:
+            p_sigma_given_s = 0.0
+
+        p_sigma_s[sigma] = p_sigma_given_s
+    return p_sigma_s
+
+def single_context_prob(s, s_count, sequences): 
+    """ 
+        For the given context s, compute P(context) = #s / total_windows.
+        Where #s is the number of occurrences of s in the sequences,
+    """
+    if len(s) > L:
+        return None
+    window_lenght = sum(len(seq) - len(s) + 1 for seq in sequences)
+    p_s = s_count / window_lenght if window_lenght > 0 else 0
+
+    return p_s
+
+def compute_context(sequences): 
+    """ 
+        Compute all subsequences of length up to L from the given sequences and their occurrences. 
+    """
+    subsequences_occurences = {}
+
+    for seq in sequences:
+        seq_len = len(seq)
+        for i in range(seq_len):
+            for l in range(1, L + 1):
+                if i + l <= seq_len:
+                    context = seq[i:i + l]
+                    if context in subsequences_occurences:
+                        subsequences_occurences[context] += 1
+                    else:
+                        subsequences_occurences[context] = 1
+    return subsequences_occurences
+
+def phace_two(alphabet, emp):
+    suffix_tree = Tree(L=L)
+    border = define_border(alphabet, get_context_probabilities(emp))
+    print(f"Initial border: {border}\n")
+    go = True
+    while go:
+        s = border[0]
+        print(f"\n----- Processing suffix '{s}' -----")
+        border.remove(s)
+        s_suffix = s[1:]
+
+        bool_sig_test = False
+        if s_suffix == "":
+            bool_sig_test = True
+        else:
+            bool_sig_test = significativity_test(s, emp, s_suffix, alphabet)
+        print(f"Significativity test for suffix '{s}': {bool_sig_test}")
+
+        if bool_sig_test:
+            add_suffixes_and_node(suffix_tree, s, emp)
+            
+            border_expansion(suffix_tree, border, s, alphabet, emp)
+
+        if len(border) == 0:
+            go = False
+    return suffix_tree
+
+def phase_one(sequences, alphabet): 
+
+    context_occ = compute_context(sequences)
+    emp = empirical_probs(context_occ, sequences, alphabet)
+    
+    return context_occ, emp
+
+def phase_zero(): 
+    # Phase 0: Initialize alphabet of actions, generate sequences
+    alphabet = ['a', 'b']
+
+
+    sequences = random_seq(nos=2)
+
     print("Generated sequences:")
     for seq in sequences:
         print(seq)
     
-    # compute suffix probabilities
-    s_prob = compute_context_probabilities(border, sequences) 
-    #print(f"Final suffix probabilities: {s_prob}\n")
+    return alphabet, sequences
 
-    suffix_tree = Tree(L=4)
-    s_sign = ["aa", "ab", "bb", "aaa", "abb", "abbb"]
+def main(): 
+    
 
-    #for s in s_sign.copy(): 
-    go = True
-    while go:
-        s = s_sign[0]
-        print(f"\n----- Processing suffix '{s}' -----")
-        s_sign.remove(s)
-        s_suffix = s[1:]
-        #print(f"s: {s}, s_suffix: {s_suffix}")
+    # Phase 0
+    alphabet, sequences = phase_zero()
 
-        # TODO: test di significatività 
-        all_suffixes = find_all_suffixes(s)[::-1]
+    # Phase 1
+    context_occ, emp = phase_one(sequences, alphabet)
+    print(f"\n\n-----Empirical probabilities:\n{emp}-----\n\n")
+    
+    # Phase 2 
+    # PST building 
+    suffix_tree = phace_two(alphabet, emp)
+
         
-        print(f"All suffixes of '{s}': {all_suffixes}")
-
-        for x in all_suffixes: # check the presence of all suffixes of s in the tree
-            
-            find = suffix_tree.search_node(x)
-            #print(f"Finding node '{x}': {find}")
-            if not find: # add it to the tree if not present
-                if x[1:] == "":
-                    father_node = suffix_tree.root
-                else:
-                    father_node = suffix_tree.find_father_node(x[1:])
-                #print(f"Father node of '{x}': '{father_node.value}'")
-                add_node(node_value=x, prob=None, father_node=father_node)
-        
-        # Aggiungi il nodo s solo se non è già presente nell'albero
-        if not suffix_tree.search_node(s):
-            father_node = suffix_tree.find_father_node(s[1:])
-            add_node(node_value=s, prob=None, father_node=father_node)
-
-        # border expansion 
-        print(f"----- Expanding border for suffix '{s}' -----")
-        if len(s) < suffix_tree.L:
-            for a in alphabet:
-                new_suffix = a + s
-                if new_suffix not in s_sign:
-                    print(f"len(s_sign): {len(s_sign)}")
-
-                    s_sign.append(new_suffix)
-                    print(f"len(s_sign) after append: {len(s_sign)}")
-                    print(f"Border expanded with new suffix: '{new_suffix}'")
-                    print(f"New border: {s_sign}\n")
-        if len(s_sign) == 0:
-            go = False
     suffix_tree.print_tree()
 
-
-
-             
-        
+      
 if __name__ == "__main__":
     main()  
     

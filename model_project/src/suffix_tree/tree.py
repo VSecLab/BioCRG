@@ -81,7 +81,7 @@ class Tree:
                 self.print_tree(child, prefix, is_last_child)
         else:
             connector = "└── " if is_last else "├── "
-            prob_str = f"{node.prob:.4f}" if node.prob is not None else "None"
+            prob_str = f"{node.prob}" if node.prob is not None else "None"
             suffix_str = f"'{node.suffix}'" if node.suffix is not None else "None"
             
             print(f"{prefix}{connector}{node.value} (prob: {prob_str}, suffix: {suffix_str})")
