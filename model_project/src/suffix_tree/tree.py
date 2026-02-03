@@ -5,12 +5,19 @@ class Tree:
         self.root = TreeNode(value="root", prob=0.0, suffix=None)
         self.L = L # max length of the tree
 
-    def traverse(self, node=None, depth=0): 
+    def add_structural_node(self, node=None, depth=0, alphabet=list): 
         if node is None:
             node = self.root 
 
         for child in node.children: 
-            self.traverse(child, depth + 1)
+            if not child.structural:
+                for a in alphabet: 
+                    new_value = a + child.value 
+                    if not self.search_node(new_value) and not child.is_leaf():
+                        new_node = TreeNode(value=new_value, prob=0.0, suffix=child.value, structural=True)
+                        child.addChild(new_node)
+                        print(f"Added structural node '{new_value}' under node '{child.value}'")
+            self.add_structural_node(child, depth + 1, alphabet)
 
     def search_node(self, node_value): 
         """ Find a node in the tree by its value. """
@@ -74,17 +81,17 @@ class Tree:
         if node is None:
             node = self.root
             print(f"Suffix Tree (max length: {self.L})")
-            print(f"└── {node.value}")
+            print(f"└── {node.value} (t_prob: {node.transitions_probs}, suffix: None)")
             prefix = "    "
             for i, child in enumerate(node.children):
                 is_last_child = (i == len(node.children) - 1)
                 self.print_tree(child, prefix, is_last_child)
         else:
             connector = "└── " if is_last else "├── "
-            prob_str = f"{node.prob}" if node.prob is not None else "None"
+            prob_str = f"{node.transitions_probs}" if node.prob is not None else "None"
             suffix_str = f"'{node.suffix}'" if node.suffix is not None else "None"
             
-            print(f"{prefix}{connector}{node.value} (prob: {prob_str}, suffix: {suffix_str})")
+            print(f"{prefix}{connector}{node.value} (t_prob: {prob_str}, suffix: {suffix_str})")
             
             if node.children:
                 extension = "    " if is_last else "│   "

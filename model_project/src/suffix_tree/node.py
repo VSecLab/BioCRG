@@ -1,10 +1,12 @@
 class TreeNode: 
 
-    def __init__(self, value=None, prob=dict, suffix=None):
+    def __init__(self, value=None, prob=dict, suffix=None, structural=False):
         self.value = value
         self.prob = prob #dict where the key are the next symbols and the values their probabilities
         self.suffix = suffix # fatherNode Value
         self.children = []
+        self.structural = structural
+        self.transitions_probs = {}
 
     def showInfo(self):
             print(f"Node value: {self.value}, Prob: {self.prob}, Suffix: {self.suffix}, Children: {list(self.children.keys())}") 

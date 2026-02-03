@@ -7,6 +7,65 @@ Pmin = 0.000001
 gamma_min = 0.0
 eps = 0.0
 
+import math
+
+def PST_Probability(PST, sequence, L):
+    """
+    Compute the log-probability of a sequence given a Probabilistic Suffix Tree (PST).
+    """
+    log_prob = 0.0
+    T = len(sequence)
+    print(f"\n\nComputing log-probability for sequence: '{sequence}'")
+    
+    for t in range(T):
+        if t == 0:
+            # First symbol: always use root
+            node = PST.root
+            symbol = sequence[t]
+            print(f"\n[{t}] First symbol, using root")
+        else:
+            # Get history: last min(L, t) symbols before position t
+            history_length = min(L, t)
+            history = sequence[t - history_length:t]
+            
+            candidate = history
+            print(f"\nHistory for position {t}: '{history}'")
+            node = None
+            
+            # Search for the longest suffix in the PST
+            while candidate != "":
+                inverted_candidate = candidate[::-1]
+                if PST.search_node(inverted_candidate):
+                    node = PST.find_father_node(inverted_candidate)
+                    print(f"[{t}] Found Candidate: {candidate} - (inverted candidate '{inverted_candidate}')")
+                    break
+                # Get suffix by removing first character
+                candidate = candidate[1:]
+            
+            # If no candidate found, use root
+            if candidate == "" or node is None:
+                node = PST.root
+            
+            symbol = sequence[t]
+        
+        # Get transition probability for this symbol
+        if symbol in node.transitions_probs:
+            prob = node.transitions_probs[symbol]
+            print(f"[{t}] P({symbol}|{node.value}) = {prob}")
+
+            if prob > 0:
+                log_prob += math.log(prob)
+            else:
+                # Handle zero probability (should not happen with gamma_min)
+                log_prob += math.log(1e-10)  # Use small value to avoid log(0)
+        else:
+            # Symbol not in transitions (should not happen if alphabet is complete)
+            log_prob += math.log(1e-10)
+    
+    print(f"\n\nTotal log-probability: {log_prob}")
+    self_info =  - log_prob / T
+    print(f"Self-information (average log-probability per symbol): {self_info}\n")
+    return log_prob
 
 def random_seq(nos:5):
     sequences = []
@@ -170,24 +229,28 @@ def empirical_probs(context_occ, sequences, alphabet):
         P(sigma|s) = #(sigma * s) / #s for each sigma in the alphabet.
     """
     emp = {}
+    extended_context_occ = compute_context_plus(sequences)
+
     for context, count in context_occ.items():
-        scp = single_context_prob(context, count, sequences)
-        pss = single_conditional_probs(context, context_occ, alphabet)
+        extendend_cout = extended_context_occ.get(context, 0)
+        scp = single_context_prob(context, extendend_cout, sequences) # i need to consider all the occurrences including last symbols
+        pss = single_conditional_probs(context, context_occ, extended_context_occ, alphabet) 
         emp[context] = (scp, pss)
         print(f"Context: '{context}', P(s): {scp}, P(sigma|s): {pss}")
     return emp
 
-def single_conditional_probs(context, context_occ, alphabet):
+def single_conditional_probs(context, context_occ, extended_context_occ, alphabet):
     """
         for the given context s, compute P(sigma|context) = #(sigma * s) / #s for each sigma in the alphabet.
         Where #(sigma * s) is the number of occurrences of the extended context (sigma + s) and #s is the number of occurrences of s.
 
     """
     p_sigma_s = {}
+    context_count = context_occ.get(context, 0)
+
     for sigma in alphabet:
-        extended_context = sigma + context
-        context_count = context_occ.get(context, 0)
-        extended_count = context_occ.get(extended_context, 0)
+        extended_context = context + sigma
+        extended_count = extended_context_occ.get(extended_context, 0)
 
         if context_count > 0:
             p_sigma_given_s = extended_count / context_count
@@ -209,9 +272,11 @@ def single_context_prob(s, s_count, sequences):
 
     return p_s
 
-def compute_context(sequences): 
+def compute_context_plus(sequences): 
     """ 
-        Compute all subsequences of length up to L from the given sequences and their occurrences. 
+        Compute all subsequences of length up to L from the given sequences and their occurrences, also with last symbols.  
+
+        E.g.: "aabbaababba", the "a" occures 6 times.
     """
     subsequences_occurences = {}
 
@@ -227,6 +292,48 @@ def compute_context(sequences):
                         subsequences_occurences[context] = 1
     return subsequences_occurences
 
+def compute_context(sequences): 
+    """ 
+        Compute all subsequences of length up to L from the given sequences and their occurrences, without last symbols.
+
+        E.g.: "aabbaababba", the "a" occures 5 times.
+    """
+    context_occ = {}
+
+    for seq in sequences:
+        seq_len = len(seq)
+        for i in range(1, seq_len):  # i is the index of the predicted symbol
+            for l in range(1, L + 1):
+                if i - l >= 0:
+                    context = seq[i - l:i]
+                    context_occ[context] = context_occ.get(context, 0) + 1
+
+    return context_occ
+
+def compute_trans_probs(tree, node=None, alphabet=list, emp=dict): 
+    cond_probs = get_conditional_probabilities(emp)
+
+    if node is None:
+        node = tree.root
+
+    for a in alphabet: 
+        if node is not tree.root:
+            father = node.suffix
+            if father == "root": 
+                p = tree.root.transitions_probs.get(a, 0)
+            else:
+                p = cond_probs.get(father, {}).get(a, 0) # P( a | father)
+            #print(f"P({a}|{father}) = {p} for node '{node.value}'")
+            node.transitions_probs[a] = (1 - len(alphabet) * gamma_min) * p + gamma_min
+            print(f"Node {node.value} - Transition probability P({a}|{node.value}) = {node.transitions_probs[a]}")
+
+        else:
+            p = emp.get(a, (0, {}))[0]  # P(a) for root node
+            node.transitions_probs[a] = (1 - len(alphabet) * gamma_min) * p + gamma_min
+
+    for child in node.children:
+        compute_trans_probs(tree, node=child, alphabet=alphabet, emp=emp)
+        
 def phace_two(alphabet, emp):
     suffix_tree = Tree(L=L)
     border = define_border(alphabet, get_context_probabilities(emp))
@@ -264,8 +371,6 @@ def phase_one(sequences, alphabet):
 def phase_zero(): 
     # Phase 0: Initialize alphabet of actions, generate sequences
     alphabet = ['a', 'b']
-
-
     sequences = random_seq(nos=2)
 
     print("Generated sequences:")
@@ -288,8 +393,20 @@ def main():
     # PST building 
     suffix_tree = phace_two(alphabet, emp)
 
-        
+    print(f"\n\n-----Suffix Tree:-----\n")
     suffix_tree.print_tree()
+    
+    # Phase 3 
+    # Adding structural node and compute probabilities
+    suffix_tree.add_structural_node(alphabet=alphabet)
+    print(f"\n\n-----Suffix Tree after adding structural nodes:-----\n")
+    suffix_tree.print_tree()
+    print("\n")
+    compute_trans_probs(suffix_tree, alphabet=alphabet, emp=emp)
+    print("\n\n\n")
+    suffix_tree.print_tree()
+
+    PST_Probability(suffix_tree, "abbababbabbaba", L)
 
       
 if __name__ == "__main__":
