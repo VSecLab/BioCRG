@@ -160,7 +160,7 @@ def sequence_probability_for_log(group_df: pd.DataFrame, prob_matrix_df: pd.Data
     
     return prob
 
-def find_closest_adjective(label, target_adj, adj_df):
+def find_closest_adjective(label, target_adj, adj_df, to_round:bool=False):
     if int(label) == -1 or pd.isna(target_adj):
         return (-1, None)
 
@@ -176,7 +176,11 @@ def find_closest_adjective(label, target_adj, adj_df):
 
     # Trova il più vicino per valore assoluto
     closest = same_sign.iloc[(same_sign['Adjective'] - target_adj).abs().argsort()].iloc[0]
-    return (label, round(float(closest['Adjective']), 4))
+
+    if to_round == True: 
+        return (label, round(float(closest['Adjective']), 4))
+    else:
+        return (label, closest['Adjective'])
 
 def compute_threshold(df: pd.DataFrame, feature_columns: list, class_stats: dict, quantile=0.05):
     """
@@ -269,7 +273,7 @@ def segment_user(username:str, file_path: str, features: list, activity: str, sc
         print(f"Failed with error: {e}")
         return
     
-def compute_user_state(lsv_mean: dict, log_df: pd.DataFrame, adj_df: pd.DataFrame):
+def compute_user_state(lsv_mean: dict, log_df: pd.DataFrame, adj_df: pd.DataFrame, to_round:bool=False):
 
     """
     Compute the user state by matching mean adjectives with log data. 
@@ -278,7 +282,9 @@ def compute_user_state(lsv_mean: dict, log_df: pd.DataFrame, adj_df: pd.DataFram
         log_df (pd.DataFrame): A DataFrame containing log information with columns ['LogNumber', 'Adjective', 'Label'].
         adj_df (pd.DataFrame): A DataFrame containing adjectives with columns ['Label', 'Adjective'].
     Returns:
-        pd.DataFrame: A DataFrame with matched states for each log entry.
+        tuple: (df_mean, grouped_states)
+            - df_mean (pd.DataFrame): A DataFrame with matched states for each log entry.
+            - grouped_states (dict): A dictionary with structure {username: {log_number: [(substantive, adjective), ...]}}
     """
     rows = []
 
@@ -300,10 +306,32 @@ def compute_user_state(lsv_mean: dict, log_df: pd.DataFrame, adj_df: pd.DataFram
     df_mean = df_mean[["Username", "LogNumber", "Adjective", "Label"]]
 
     df_mean['MatchedState'] = df_mean.apply(
-        lambda row: str(find_closest_adjective(row['Label'], row['Adjective'], adj_df)), axis=1
+        lambda row: str(find_closest_adjective(row['Label'], row['Adjective'], adj_df, to_round=to_round)), axis=1
     )
 
-    return df_mean
+    # Crea il dizionario raggruppato per utente e LogNumber
+    grouped_states = {}
+    for username in df_mean['Username'].unique():
+        grouped_states[username] = {}
+        user_data = df_mean[df_mean['Username'] == username]
+        
+        for log_number in sorted(user_data['LogNumber'].unique()):
+            log_number_int = int(log_number)
+            log_data = user_data[user_data['LogNumber'] == log_number]
+            
+            # Usa find_closest_adjective e inverte la tupla da (substantive, adjective) a (adjective, substantive)
+            states_list = []
+            for _, row in log_data.iterrows():
+                result = find_closest_adjective(row['Label'], row['Adjective'], adj_df, to_round=to_round)
+                if result is None:
+                    states_list.append(None)
+                else:
+                    # Inverti da (label, adjective) a (adjective, label)
+                    states_list.append((result[1], result[0]))
+            
+            grouped_states[username][log_number_int] = states_list
+
+    return df_mean, grouped_states
 
 def main(): 
     username = "grims"

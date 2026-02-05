@@ -1,4 +1,4 @@
-from node import TreeNode
+from .node import TreeNode
 
 class Tree: 
     def __init__(self, L=int):
@@ -12,7 +12,7 @@ class Tree:
         for child in node.children: 
             if not child.structural:
                 for a in alphabet: 
-                    new_value = a + child.value 
+                    new_value = a + "_" + child.value  # Add separator
                     if not self.search_node(new_value) and not child.is_leaf():
                         new_node = TreeNode(value=new_value, prob=0.0, suffix=child.value, structural=True)
                         child.addChild(new_node)

@@ -59,7 +59,7 @@ def format_state(state):
 
 def transition_matrix_computation(adj_df: pd.DataFrame, activity_df: pd.DataFrame):
     # lista ordinata di tutti gli stati unici come (label, adjective)
-    state_list = adj_df.copy()
+    state_list = adj_df.copy() 
     
     state_list['State'] = list(zip(state_list['Label'], state_list['Adjective']))
     state_list = state_list['State'].tolist()
@@ -206,16 +206,4 @@ def transition_computation_kmeans(activity: str, scaler: str, threshold: float, 
     print(f"\nTransition results saved in {config.RESULTS_DIR}/transition_results/{activity}/{scaler}")
 
     return df_transition, df_probabilities, df_initial, sequence_stats
-
-if __name__ == "__main__":
-    print("=== Transition Matrix Computation ===")
-    transition_computation_kmeans(
-        activity="sphereActivity",
-        scaler="standard",
-        threshold=0.75,
-        eps=0.25,
-        min_samples=8,
-        file_path=config.PROCESSED_DATA_DIR + "/dbscan_results_rotation/sphereActivity/standard"
-    )
-    exit(1) 
 
