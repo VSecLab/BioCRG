@@ -14,7 +14,7 @@ def doe():
         test_activity = row["TestActivity"]
         mode = row["Concat"]
         N = row["N_states"]
-        L = int(row["L"]) if row["L"] != "None" else 0
+        L = row["L"] if row["L"] != "None" else 0
         GhostCount = row["Ghost_Count"]
         Predict = 0 if row["AvgLogProb"] > 10 else 1
         Actual = 1 if target_activity == test_activity else 0

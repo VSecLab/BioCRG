@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from data_processing.src import etl
 from data_processing.src import config 
 import data_processing.src.plot as plot
+import pickle
  
 MIN_NUMBER_SAMPLES = config.MIN_NUMBER_SAMPLES 
 PLT_WIDTH = 16
@@ -438,7 +439,7 @@ def segmentation_on_activity(file_path: str, features: list, activity: str, thre
     
     if df.empty:
         print(f"No data found for activity '{activity}'.")
-        return
+        return [], np.empty((0, len(features)), float), {}
 
     df = df.reset_index(drop=True)  
 
@@ -520,11 +521,14 @@ def segment_all_users(activity: str, features: list, threshold: float, scaler: s
 
     complete_filepath = filepath + f"/segments_number/{activity}/{scaler}" + f"/segmentation_results_{activity}_{threshold}_{scaler}.csv"
     rsv_path = filepath + f"/right_singular_vector/{activity}/{scaler}" + f"/rsv_{activity}_{threshold}_{scaler}.csv"
+    lsv_path = filepath + f"/left_singular_vector/{activity}/{scaler}" + f"/lsv_{activity}_{threshold}_{scaler}.pkl"
 
     directory = os.path.dirname(complete_filepath)
     os.makedirs(directory, exist_ok=True)
     rsv_directory = os.path.dirname(rsv_path)
     os.makedirs(rsv_directory, exist_ok=True)
+    lsv_directory = os.path.dirname(lsv_path)
+    os.makedirs(lsv_directory, exist_ok=True)
 
     rsv_df = pd.DataFrame(rsv_all_users, columns=['LogNumber'] + [str(i) for i in range(1, len(features) - 1)])
     rsv_df.insert(0, 'Username', rsv_usernames)
@@ -581,10 +585,74 @@ def segment_all_users(activity: str, features: list, threshold: float, scaler: s
     #rsv_df.to_csv(rsv_path, index=False, mode='a', header=False)
     df.to_csv(complete_filepath, index=False)
     final_df.to_csv(rsv_path, index=False)
+    
+    # Save lsv_all_users dictionary to pickle file
+    with open(lsv_path, 'wb') as f:
+        pickle.dump(lsv_all_users, f)
 
     #print(final_df)
 
     return final_df, lsv_all_users
+
+def get_or_compute_segmentation(activity: str, features: list, threshold: float, scaler: str, filepath: str):
+    """
+    Load segmentation data from files if they exist, otherwise compute and save them.
+    
+    This function checks if the segmentation files (RSV CSV and LSV pickle) already exist.
+    If they do, it loads them instead of recomputing the segmentation for all users.
+    If they don't exist, it calls segment_all_users() to compute and save them.
+    
+    Args:
+        activity (str): Activity to filter by.
+        features (list): List of features to include.
+        threshold (float): Threshold value for segmentation.
+        scaler (str): Scaler type to use ('standard', 'minmax', etc.).
+        filepath (str): Directory path to save/load the segmentation results.
+        
+    Returns:
+        tuple: A tuple containing:
+            - rsv_df: DataFrame containing the right singular vectors and adjectives for all users.
+            - lsv_all_users: Dictionary with usernames as keys and LSV activity dictionaries as values.
+    """
+    # Build file paths
+    rsv_path = filepath + f"/right_singular_vector/{activity}/{scaler}" + f"/rsv_{activity}_{threshold}_{scaler}.csv"
+    lsv_path = filepath + f"/left_singular_vector/{activity}/{scaler}" + f"/lsv_{activity}_{threshold}_{scaler}.pkl"
+    
+    # Check if both files exist
+    if os.path.exists(rsv_path) and os.path.exists(lsv_path):
+        print(f"Loading existing segmentation data for {activity} (threshold={threshold}, scaler={scaler})...")
+        print(f"  RSV file: {rsv_path}")
+        print(f"  LSV file: {lsv_path}")
+        
+        # Load RSV DataFrame from CSV
+        rsv_df = pd.read_csv(rsv_path)
+        
+        # Load LSV dictionary from pickle
+        with open(lsv_path, 'rb') as f:
+            lsv_all_users = pickle.load(f)
+        
+        print(f"Segmentation data loaded successfully!")
+        print(f"  - RSV DataFrame shape: {rsv_df.shape}")
+        print(f"  - Number of users in LSV: {len(lsv_all_users)}")
+        
+        return rsv_df, lsv_all_users
+    else:
+        # Files don't exist, compute segmentation
+        print(f"Segmentation files not found. Computing segmentation for {activity}...")
+        print(f"  (threshold={threshold}, scaler={scaler})")
+        
+        rsv_df, lsv_all_users = segment_all_users(
+            activity=activity, 
+            features=features, 
+            threshold=threshold, 
+            scaler=scaler, 
+            filepath=filepath
+        )
+        
+        print(f"Segmentation computed and saved!")
+        
+        return rsv_df, lsv_all_users
+
 
 def segment_everything(activity: list, features:list, threshold: list, scaler: list, filepath: str):
     """

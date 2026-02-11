@@ -2,13 +2,14 @@ from .node import TreeNode
 from .tree import Tree
 import numpy as np
 import random
+import math
 
-L = 4  # Max length of the suffix tree
+#L = 4  # Max length of the suffix tree
 Pmin = 0.000001
 gamma_min = 0.0
 eps = 0.0
 
-import math
+
 
 def ghost_func(n: int, N: int, exp: int, states: int) -> float:
     m = math.ceil(states / N)
@@ -110,13 +111,13 @@ def random_seq(nos=5, alphabet=None):
         sequences.append(sequence)
     return sequences
 
-def define_border(alphabet, contexts_prob): 
+def define_border(alphabet, contexts_prob, pmin=0.000001): 
     border = []
     for a in alphabet: 
         # Convert single symbol to tuple for dictionary lookup
         a_tuple = (a,)
         a_prob = contexts_prob.get(a_tuple, 0)
-        if a_prob > Pmin:  # Threshold for including in the border
+        if a_prob > pmin:  # Threshold for including in the border
             border.append(a_tuple)
     return border
 
@@ -143,7 +144,7 @@ def find_father_suffix(s):
     """
     return s[1:]
 
-def border_expansion(suffix_tree, border, s, alphabet, emp): 
+def border_expansion(suffix_tree, border, s, alphabet, emp, L, pmin=0.000001): 
     # border expansion 
     if len(s) < L:
         for a in alphabet:
@@ -151,12 +152,12 @@ def border_expansion(suffix_tree, border, s, alphabet, emp):
 
             # probability check 
             p_new_suffix = get_context_probabilities(emp).get(new_suffix, 0)
-            if p_new_suffix > Pmin and new_suffix not in border:
+            if p_new_suffix > pmin and new_suffix not in border:
 
                 border.append(new_suffix)
                 print(f"Border expanded: {border}")
 
-def add_suffixes_and_node(suffix_tree, s, emp):
+def add_suffixes_and_node(suffix_tree, s, emp, L):
     # s is now a tuple of symbols
     # Convert tuple to string for node value (using '_' as separator)
     s_str = '_'.join(s) if len(s) > 0 else ''
@@ -182,7 +183,7 @@ def add_suffixes_and_node(suffix_tree, s, emp):
         father_node = suffix_tree.find_father_node(suffix_str) if suffix_str else suffix_tree.root
         add_node(node_value=s_str, prob=emp.get(s, (0, {})), father_node=father_node)  
 
-def significativity_test(s, emp, parent_suffix, alphabet): 
+def significativity_test(s, emp, parent_suffix, alphabet, gamma_min=0.0, eps=0.0): 
     find = False 
     for a in alphabet:
         conditional_prob = get_single_conditional_prob(emp=emp, s=s, sigma=a)
@@ -266,18 +267,18 @@ def get_context_probabilities(emp):
         context_probs[context] = prob
     return context_probs
 
-def empirical_probs(context_occ, sequences, alphabet):
+def empirical_probs(context_occ, sequences, alphabet, L):
     """
         Compute empirical probabilities for all contexts:
         P(s) = #s / total_windows
         P(sigma|s) = #(sigma * s) / #s for each sigma in the alphabet.
     """
     emp = {}
-    extended_context_occ = compute_context_plus(sequences)
+    extended_context_occ = compute_context_plus(sequences, L)
 
     for context, count in context_occ.items():
         extendend_cout = extended_context_occ.get(context, 0)
-        scp = single_context_prob(context, extendend_cout, sequences) # i need to consider all the occurrences including last symbols
+        scp = single_context_prob(context, extendend_cout, sequences, L) # i need to consider all the occurrences including last symbols
         pss = single_conditional_probs(context, context_occ, extended_context_occ, alphabet) 
         emp[context] = (scp, pss)
         print(f"Context: {context}, P(s): {scp}, P(sigma|s): {pss}")
@@ -305,7 +306,7 @@ def single_conditional_probs(context, context_occ, extended_context_occ, alphabe
         p_sigma_s[sigma] = p_sigma_given_s
     return p_sigma_s
 
-def single_context_prob(s, s_count, sequences): 
+def single_context_prob(s, s_count, sequences, L): 
     """ 
         For the given context s, compute P(context) = #s / total_windows.
         Where #s is the number of occurrences of s in the sequences,
@@ -317,7 +318,7 @@ def single_context_prob(s, s_count, sequences):
 
     return p_s
 
-def compute_context_plus(sequences): 
+def compute_context_plus(sequences, L): 
     """ 
         Compute all subsequences of length up to L from the given sequences and their occurrences, also with last symbols.  
 
@@ -337,7 +338,7 @@ def compute_context_plus(sequences):
                         subsequences_occurences[context] = 1
     return subsequences_occurences
 
-def compute_context(sequences): 
+def compute_context(sequences, L=None): 
     """ 
         Compute all subsequences of length up to L from the given sequences and their occurrences, without last symbols.
 
@@ -355,7 +356,7 @@ def compute_context(sequences):
 
     return context_occ
 
-def compute_trans_probs(tree, node=None, alphabet=list, emp=dict): 
+def compute_trans_probs(tree, node=None, alphabet=list, emp=dict, gamma_min=0.0): 
     cond_probs = get_conditional_probabilities(emp)
 
     if node is None:
@@ -380,21 +381,20 @@ def compute_trans_probs(tree, node=None, alphabet=list, emp=dict):
             node.transitions_probs[a] = (1 - len(alphabet) * gamma_min) * p + gamma_min
 
     for child in node.children:
-        compute_trans_probs(tree, node=child, alphabet=alphabet, emp=emp)
+        compute_trans_probs(tree, node=child, alphabet=alphabet, emp=emp, gamma_min=gamma_min)
 
-def phace_three(suffix_tree, alphabet, emp):
+def phace_three(suffix_tree, alphabet, emp, gamma_min=0.0):
     suffix_tree.add_structural_node(alphabet=alphabet)
     #print(f"\n\n-----Suffix Tree after adding structural nodes:-----\n")
     #suffix_tree.print_tree()
     #print("\n")
-    compute_trans_probs(suffix_tree, alphabet=alphabet, emp=emp)
+    compute_trans_probs(suffix_tree, alphabet=alphabet, emp=emp, gamma_min=gamma_min)
     print("\n\n\n")
     suffix_tree.print_tree()
-
-  
-def phace_two(alphabet, emp, L):
+ 
+def phace_two(alphabet, emp, L, pmin=0.000001, gamma_min=0.0, eps=0.0):
     suffix_tree = Tree(L=L)
-    border = define_border(alphabet, get_context_probabilities(emp))
+    border = define_border(alphabet, get_context_probabilities(emp), pmin=pmin)
     print(f"Initial border: {border}\n")
     go = True
     while go:
@@ -407,22 +407,22 @@ def phace_two(alphabet, emp, L):
         if len(s_suffix) == 0:  # Check length instead of comparing to ""
             bool_sig_test = True
         else:
-            bool_sig_test = significativity_test(s, emp, s_suffix, alphabet)
+            bool_sig_test = significativity_test(s, emp, s_suffix, alphabet, gamma_min=gamma_min, eps=eps)
         print(f"Significativity test for suffix {s}: {bool_sig_test}")
 
         if bool_sig_test:
-            add_suffixes_and_node(suffix_tree, s, emp)
+            add_suffixes_and_node(suffix_tree, s, emp, L)
             
-            border_expansion(suffix_tree, border, s, alphabet, emp)
+            border_expansion(suffix_tree, border, s, alphabet, emp, L, pmin=pmin)
 
         if len(border) == 0:
             go = False
     return suffix_tree
 
-def phase_one(sequences, alphabet): 
+def phase_one(sequences, alphabet, L=None): 
 
-    context_occ = compute_context(sequences)
-    emp = empirical_probs(context_occ, sequences, alphabet)
+    context_occ = compute_context(sequences, L)
+    emp = empirical_probs(context_occ, sequences, alphabet, L)
     
     return context_occ, emp
 
@@ -438,37 +438,37 @@ def phase_zero(alphabet=None, sequences=None):
     
     return alphabet, sequences
 
-
-def create_tree(sequences = None, alphabet = None, L=int): 
+def create_tree(sequences = None, alphabet = None, L=int, pmin=0.000001, gamma_min=0.0, eps=0.0): 
     # Phase 0
     alphabet, sequences = phase_zero(alphabet, sequences)
 
     # Phase 1
-    context_occ, emp = phase_one(sequences, alphabet)
+    context_occ, emp = phase_one(sequences, alphabet, L)
     print(f"\n\n-----Empirical probabilities:\n{emp}-----\n\n")
     
     # Phase 2 
     # PST building 
-    suffix_tree = phace_two(alphabet, emp, L)
+    suffix_tree = phace_two(alphabet, emp, L, pmin=pmin, gamma_min=gamma_min, eps=eps)
 
     #print(f"\n\n-----Suffix Tree:-----\n")
     #suffix_tree.print_tree()
     
     # Phase 3 
     # Adding structural node and compute probabilities
-    phace_three(suffix_tree, alphabet, emp)
+    phace_three(suffix_tree, alphabet, emp, gamma_min=gamma_min)
 
     return suffix_tree
 
 def main(): 
+    L = 4
     # Example usage with list sequences
     alphabet = ['a', 'b']
     # sequences = [["a", "b", "b", "a", "b", "a", "b", "b", "a", "b", "b", "a", "b", "a"]]
     # Or use random sequences
     sequences = random_seq(nos=2, alphabet=alphabet)
     
-    suffix_tree = create_tree(sequences=sequences, alphabet=alphabet)
-
+    suffix_tree = create_tree(sequences=sequences, alphabet=alphabet, L=L)
+    
     test_sequence = ["a", "b", "b", "a", "b", "a", "b", "b", "a", "b", "b", "a", "b", "a"]
     PST_Probability(suffix_tree, test_sequence, L)
      
