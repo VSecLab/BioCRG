@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script for running grid search over multiple hyperparameter combinations.
+Script for running grid search over multiple hyperparameter combinations using Markov Chain model.
 """
 
 import argparse
@@ -8,8 +8,7 @@ import itertools
 import gc
 import psutil
 from datetime import datetime
-from run_model_suffix import run_model_suffix_pipeline
-import grid_search_configs as configs
+from run_model import run_model_pipeline
 
 
 # ============================================================================
@@ -42,11 +41,9 @@ def cleanup_memory(verbose=True):
 
 # Define parameter grids for each hyperparameter
 # Add/remove values in the lists to configure your grid search
-# Or use one of the predefined configurations from grid_search_configs.py
 
-# RESUMING FROM: ladderActivity, sphereActivity, 0.5, k=5, l=2, pmin=1e-06, gamma_min=1e-06
-# This was combination 1621/3240. Use --skip 1621 to continue from 1622
-PARAM_GRID = {
+
+GRID_FULL = {
     'target_activity': ['sphereActivity', 'ladderActivity'],
     'test_activity': ['sphereActivity', 'ladderActivity'],
     'threshold': [0.5, 0.6, 0.7],
@@ -56,13 +53,11 @@ PARAM_GRID = {
     'k_value': [5,6,7,8,9,10],
     'eps': [0.25],
     'min_samples': [11],
-    'l_value': [2, 4, 6, 8, 10],
     'ghost_exp': [4],
-    'pmin': [0.000001, 0.00001, 0.0001],
-    'gamma_min': [0.0, 0.000001, 0.0001],
-    'eps_suffix': [0.0],
     'enable_plots': [False]
 }
+# Default parameter grid
+PARAM_GRID = GRID_FULL
 
 
 def generate_combinations(param_grid, limit=None, skip=0):
@@ -113,7 +108,7 @@ def run_grid_search(param_grid, dry_run=False, verbose=True, max_memory_mb=None,
         total_possible *= len(values)
     
     print("=" * 80)
-    print(f"GRID SEARCH CONFIGURATION")
+    print(f"GRID SEARCH CONFIGURATION (MARKOV CHAIN MODEL)")
     print("=" * 80)
     print(f"Total possible combinations: {total_possible}")
     if skip > 0:
@@ -172,9 +167,9 @@ def run_grid_search(param_grid, dry_run=False, verbose=True, max_memory_mb=None,
         
         try:
             # Run the pipeline with current parameter combination
-            run_model_suffix_pipeline(**params)
+            run_model_pipeline(**params)
             successful_runs += 1
-            print(f"\n✓ Combination {combination_number}/{total_possible} completed successfully")
+            print(f"\nCombination {combination_number}/{total_possible} completed successfully")
             
         except Exception as e:
             import traceback
@@ -189,11 +184,16 @@ def run_grid_search(param_grid, dry_run=False, verbose=True, max_memory_mb=None,
         
         finally:
             # Clean up memory after each run (success or failure)
+            c_mem = get_memory_usage()
             print("\nCleaning up memory...")
+            
             cleanup_memory(verbose=verbose)
             
             # Check memory usage
             current_memory = get_memory_usage()
+
+            print(f"Before cleanup memory usage: {c_mem:.1f} MB")
+            print(f"After cleanup memory usage: {current_memory:.1f} MB")
             if max_memory_mb and current_memory > max_memory_mb:
                 memory_warnings += 1
                 print(f"WARNING: Memory usage ({current_memory:.1f} MB) exceeds threshold ({max_memory_mb} MB)")
@@ -240,30 +240,30 @@ def run_grid_search(param_grid, dry_run=False, verbose=True, max_memory_mb=None,
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Run grid search over hyperparameter combinations',
+        description='Run grid search over hyperparameter combinations (Markov Chain model)',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   # Show available predefined configurations
-  python3 run_grid_search.py --list-configs
+  python3 run_grid_search_markov.py --list-configs
   
   # Dry run with default configuration
-  python3 run_grid_search.py --dry-run
+  python3 run_grid_search_markov.py --dry-run
   
   # Run with a predefined configuration
-  python3 run_grid_search.py --run --config GRID_K_VALUES
+  python3 run_grid_search_markov.py --run --config GRID_K_VALUES
   
   # Run with default configuration
-  python3 run_grid_search.py --run
+  python3 run_grid_search_markov.py --run
   
   # Run with memory monitoring (warning at 8GB)
-  python3 run_grid_search.py --run --max-memory 8192
+  python3 run_grid_search_markov.py --run --max-memory 8192
   
   # Run only first 10 combinations (useful for testing)
-  python3 run_grid_search.py --run --limit 10
+  python3 run_grid_search_markov.py --run --limit 10
   
   # Run with minimal output
-  python3 run_grid_search.py --run --quiet
+  python3 run_grid_search_markov.py --run --quiet
         """
     )
     
@@ -296,9 +296,11 @@ Examples:
     # List available configurations
     if args.list_configs:
         print("Available predefined configurations:\n")
-        config_names = [name for name in dir(configs) if name.startswith('GRID_')]
-        for config_name in sorted(config_names):
-            config = getattr(configs, config_name)
+        config_dict = {
+            'GRID_FULL': GRID_FULL,
+        }
+        
+        for config_name, config in sorted(config_dict.items()):
             # Count varying parameters
             varying_params = [k for k, v in config.items() if len(v) > 1]
             total_combinations = 1
@@ -320,15 +322,19 @@ Examples:
     
     # Select configuration
     if args.config:
-        if not hasattr(configs, args.config):
+        config_dict = {
+            'GRID_FULL': GRID_FULL,
+        }
+        
+        if args.config not in config_dict:
             print(f"Error: Configuration '{args.config}' not found.")
             print("Use --list-configs to see available configurations.")
             return
-        param_grid = getattr(configs, args.config)
+        param_grid = config_dict[args.config]
         print(f"Using predefined configuration: {args.config}\n")
     else:
         param_grid = PARAM_GRID
-        print("Using default configuration from PARAM_GRID\n")
+        print("Using default configuration (GRID_FULL)\n")
     
     verbose = not args.quiet
     

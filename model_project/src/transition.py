@@ -151,7 +151,7 @@ def transition_matrix_computation(adj_df: pd.DataFrame, activity_df: pd.DataFram
 
     return df_transition, df_probabilities, df_initial, sequence_stats
     
-def transition_computation_dbscan(activity: str, scaler: str, threshold: float, eps: float, min_samples: int, file_path: str):
+def transition_computation_dbscan(activity: str, scaler: str, threshold: float, eps: float, min_samples: int, file_path: str, enable_plots: bool = False):
     
     #sub_df = pd.read_csv(file_path + f"/substantives/substantives_{activity}_{threshold}_{scaler}_eps{eps}_minsample{min_samples}.csv")
     
@@ -160,13 +160,14 @@ def transition_computation_dbscan(activity: str, scaler: str, threshold: float, 
 
     df_transition, df_probabilities, df_initial, sequence_stats = transition_matrix_computation(adj_df, activity_df)
 
-    print("\n== Transition Matrix: ==")
-    #print(df_transition)
-    heatmap_plot(df_transition)
+    if enable_plots:
+        print("\n== Transition Matrix: ==")
+        #print(df_transition)
+        heatmap_plot(df_transition)
 
-    print("\n== Transition Probabilities: ==")
-    #print(df_probabilities)
-    heatmap_plot_probabilities(df_probabilities)
+        print("\n== Transition Probabilities: ==")
+        #print(df_probabilities)
+        heatmap_plot_probabilities(df_probabilities)
 
     """print("\n== Initial State Probabilities: ==")
     print(df_initial)"""
@@ -179,7 +180,7 @@ def transition_computation_dbscan(activity: str, scaler: str, threshold: float, 
 
     return df_transition, df_probabilities, df_initial, sequence_stats
 
-def transition_computation_kmeans(activity: str, scaler: str, threshold: float, k: int, file_path: str):
+def transition_computation_kmeans(activity: str, scaler: str, threshold: float, k: int, file_path: str, enable_plots: bool = False):
     
     #sub_df = pd.read_csv(file_path + f"/substantives/substantives_{activity}_{threshold}_{scaler}_eps{eps}_minsample{min_samples}.csv")
     
@@ -188,13 +189,14 @@ def transition_computation_kmeans(activity: str, scaler: str, threshold: float, 
 
     df_transition, df_probabilities, df_initial, sequence_stats = transition_matrix_computation(adj_df, activity_df)
 
-    print("\n== Transition Matrix: ==")
-    #print(df_transition)
-    heatmap_plot(df_transition)
+    if enable_plots:
+        print("\n== Transition Matrix: ==")
+        #print(df_transition)
+        heatmap_plot(df_transition)
 
-    print("\n== Transition Probabilities: ==")
-    #print(df_probabilities)
-    heatmap_plot_probabilities(df_probabilities)
+        print("\n== Transition Probabilities: ==")
+        #print(df_probabilities)
+        heatmap_plot_probabilities(df_probabilities)
 
     """print("\n== Initial State Probabilities: ==")
     print(df_initial)"""
