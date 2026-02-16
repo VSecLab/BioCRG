@@ -9,7 +9,8 @@ This project is part of a research thesis focused on developing a model for acti
 - `data_logs/results/recognition_results` - Results of the validation process
 - `model_project/src/` - Model code
 - `model_project/src/data_processing/` - Data processing codes
-- `model_project/src/model.ipynb` - Jupyter notebook to run the model 
+- `model_project/src/model.ipynb` - Jupyter notebook to run the model with Markov chain
+- `model_project/src/model_suffix.ipynb` - Jupyter notebook to run the model with PST
 
 ## Requirements
 
@@ -26,7 +27,8 @@ This project is part of a research thesis focused on developing a model for acti
     ```
     pip install -r requirements.txt
     ```
-3. Open "model_project/src/model.ipynb" and run the model step by step.
+3. Change BASE_PATH in "model_project/src/data_processing/src/config.py".
+4. Open "model_project/src/model.ipynb" or "model_project/src/model_suffix.ipynb" and run the model step by step.
 
 ---
 
@@ -51,4 +53,4 @@ Android/data/com.YourCompanyName.YourGameName/files/
 
 ## Contact
 
-For questions or collaboration, please contact [fr.grimaldi@outlook.com].
+For questions or collaboration, please contact [francesco.grimaldi3@unina.it]-[fr.grimaldi@outlook.com].
