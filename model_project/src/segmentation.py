@@ -25,7 +25,7 @@ def plot_segmentation_for_all_logs(df: pd.DataFrame, activity: str, features: li
         threshold (float): Threshold value for segmentation
     """
     unique_log_numbers = sorted(df['LogNumber'].unique())
-    print(f"Found {len(unique_log_numbers)} unique log numbers: {unique_log_numbers}")
+    # print(f"Found {len(unique_log_numbers)} unique log numbers: {unique_log_numbers}")
     
     # Setup the plot
     plt.figure(figsize=(PLT_WIDTH, PLT_HEIGHT))
@@ -39,13 +39,13 @@ def plot_segmentation_for_all_logs(df: pd.DataFrame, activity: str, features: li
         df_log = etl.filter_data_on_features(df_log, features=features)
         
         if df_log.empty:
-            print(f"No data found for log number {log_number}")
+            # print(f"No data found for log number {log_number}")
             continue
         
         # Reset index to start from 0
         df_log = df_log.reset_index(drop=True)
         
-        print(f"Processing log number {log_number}, shape: {df_log.shape}")
+        # print(f"Processing log number {log_number}, shape: {df_log.shape}")
         
         # Compute segmentation index
         segmentation_index_list, numberOfSegments, _, _ = segmentation(df_log, threshold)
@@ -87,7 +87,7 @@ def plot_segmentation_separate_figures(df: pd.DataFrame, activity: str, features
         threshold (float): Threshold value for segmentation
     """
     unique_log_numbers = sorted(df['LogNumber'].unique())
-    print(f"Found {len(unique_log_numbers)} unique log numbers: {unique_log_numbers}")
+    # print(f"Found {len(unique_log_numbers)} unique log numbers: {unique_log_numbers}")
     
     for log_number in unique_log_numbers:
         # Filter data for current log number
@@ -95,13 +95,13 @@ def plot_segmentation_separate_figures(df: pd.DataFrame, activity: str, features
         df_log = etl.filter_data_on_features(df_log, features=features)
         
         if df_log.empty:
-            print(f"No data found for log number {log_number}")
+            # print(f"No data found for log number {log_number}")
             continue
         
         # Reset index to start from 0
         df_log = df_log.reset_index(drop=True)
         
-        print(f"Processing log number {log_number}, shape: {df_log.shape}")
+        # print(f"Processing log number {log_number}, shape: {df_log.shape}")
         
         # Compute segmentation index
         segmentation_index_list, numberOfSegments, _, _ = segmentation(df_log, threshold)
@@ -145,7 +145,7 @@ def plot_user_executions_separate(username: str, activity: str, threshold: float
         threshold (float): Threshold value for segmentation
         scaler (str): Scaler type to use ('minmax', 'standard', etc.)
     """
-    print(f"Starting segmentation plot for user: {username}\n")
+    # print(f"Starting segmentation plot for user: {username}\n")
 
     file_path = config.find_file_from_username(username=username)
     features = ['Timestamp','HeadPosX','HeadPosY','HeadPosZ','HeadRotX','HeadRotY','HeadRotZ',
@@ -161,15 +161,15 @@ def plot_user_executions_separate(username: str, activity: str, threshold: float
                                           rotation_features=config.ROTATION_FEATURES, 
                                           scaler_type=scaler)
 
-    print(f"DataFrame after separate normalization: \n {df.tail()}\n")
+    # print(f"DataFrame after separate normalization: \n {df.tail()}\n")
     
     if df.empty:
-        print(f"No data found for activity '{activity}' and user '{username}'.")
+        # print(f"No data found for activity '{activity}' and user '{username}'.")
         return
 
     df = df.reset_index(drop=True)    
     
-    print(f"Plotting separate figures for each execution of user '{username}'\n")
+    # print(f"Plotting separate figures for each execution of user '{username}'\n")
     plot_segmentation_separate_figures(df, activity, features[1:], threshold)
 
 def plot_two_users_comparison(username1: str, log_number1: int, username2: str, log_number2: int, 
@@ -186,7 +186,7 @@ def plot_two_users_comparison(username1: str, log_number1: int, username2: str, 
         threshold (float): Threshold value for segmentation
         scaler (str): Scaler type to use ('minmax', 'standard', etc.)
     """
-    print(f"Starting segmentation comparison between users: {username1} (log {log_number1}) vs {username2} (log {log_number2})\n")
+    # print(f"Starting segmentation comparison between users: {username1} (log {log_number1}) vs {username2} (log {log_number2})\n")
 
     features = ['Timestamp','HeadPosX','HeadPosY','HeadPosZ','HeadRotX','HeadRotY','HeadRotZ',
                 'RightPosX','RightPosY','RightPosZ','RightRotX','RightRotY','RightRotZ',
@@ -219,19 +219,19 @@ def plot_two_users_comparison(username1: str, log_number1: int, username2: str, 
 
     # Check if data exists
     if df1_log.empty:
-        print(f"No sufficient data found for user '{username1}' with log number {log_number1}")
+        # print(f"No sufficient data found for user '{username1}' with log number {log_number1}")
         return
         
     if df2_log.empty:
-        print(f"No sufficient data found for user '{username2}' with log number {log_number2}")
+        # print(f"No sufficient data found for user '{username2}' with log number {log_number2}")
         return
 
     # Reset indices
     df1_log = df1_log.reset_index(drop=True)
     df2_log = df2_log.reset_index(drop=True)
 
-    print(f"User '{username1}' log {log_number1} shape: {df1_log.shape}")
-    print(f"User '{username2}' log {log_number2} shape: {df2_log.shape}")
+    # print(f"User '{username1}' log {log_number1} shape: {df1_log.shape}")
+    # print(f"User '{username2}' log {log_number2} shape: {df2_log.shape}")
 
     # Compute segmentation indices
     seg_index_list1, num_segments1, _, _ = segmentation(df1_log, threshold)
@@ -277,13 +277,13 @@ def plot_two_users_comparison(username1: str, log_number1: int, username2: str, 
     plt.tight_layout()
     plt.show()
     
-    print(f"\nComparison completed:")
-    print(f"- {username1} (log {log_number1}): {num_segments1} segments, {len(seg_index_list1)} frames")
-    print(f"- {username2} (log {log_number2}): {num_segments2} segments, {len(seg_index_list2)} frames")
+    # print(f"\nComparison completed:")
+    # print(f"- {username1} (log {log_number1}): {num_segments1} segments, {len(seg_index_list1)} frames")
+    # print(f"- {username2} (log {log_number2}): {num_segments2} segments, {len(seg_index_list2)} frames")
 
 def plot_seg(username: str, features: list, activity: str, threshold: float, scaler: str): 
 
-    print("Starting segmentation test...\n")
+    # print("Starting segmentation test...\n")
 
     file_path = config.find_file_from_username(username=username)
     features = ['Timestamp','HeadPosX','HeadPosY','HeadPosZ','HeadRotX','HeadRotY','HeadRotZ','RightPosX','RightPosY','RightPosZ','RightRotX','RightRotY','RightRotZ','LeftPosX','LeftPosY','LeftPosZ','LeftRotX','LeftRotY','LeftRotZ']
@@ -294,13 +294,13 @@ def plot_seg(username: str, features: list, activity: str, threshold: float, sca
     df = etl.filter_data_on_activity(df=base_df, activity=activity).dropna()
     df = etl.scaler_on_postion_and_rotation(df=df, position_features=config.POSITION_FEATURES, rotation_features=config.ROTATION_FEATURES, scaler_type=scaler)
 
-    print(f"base_df after separate normalization: \n {df.tail()}\n")
+    # print(f"base_df after separate normalization: \n {df.tail()}\n")
 
     # ------------ #
-    print("\nPlot logs\n")
+    # print("\nPlot logs\n")
     
     if df.empty:
-        print(f"No data found for activity '{activity}'.")
+        # print(f"No data found for activity '{activity}'.")
         return
 
     df = df.reset_index(drop=True)    
@@ -310,7 +310,7 @@ def plot_seg(username: str, features: list, activity: str, threshold: float, sca
 
     # ------------ #
     """
-    print("\nPlot value over time\n")
+    # print("\nPlot value over time\n")
     log_number = 2
 
     df = etl.filter_data_on_log_number(df=df, log_number=log_number)
@@ -370,6 +370,7 @@ def segmentation(df: pd.DataFrame, threshold: float):
     i = 0
 
     numberOfSegments = 1 
+    #print(f"Number of frames: {len(df)}")
 
     for row in df.values: 
         segmentationMatrix = np.vstack([segmentationMatrix, row[1:]])
@@ -383,8 +384,9 @@ def segmentation(df: pd.DataFrame, threshold: float):
             sigma2 = 0
 
         segmentationIndex = sigma2 / sigma1
-
+        
         if ((segmentationIndex > threshold) and searchNewSegment): 
+            #print(f"Found new segment at index {i} ")
             # quando supero la threshold e non sono in un nuovo segmento vuol dire che ho trovato un nuovo segmento
             right_singular_vector = np.vstack([right_singular_vector, Vh[0, :].reshape(1, -1)])
 
@@ -435,10 +437,15 @@ def segmentation_on_activity(file_path: str, features: list, activity: str, thre
     base_df = etl.load_data(file_path)
     # Normalizzo position e rotation separatamente e solo sull'attività specificata
     df = etl.filter_data_on_activity(df=base_df, activity=activity).dropna()
-    df = etl.scaler_on_postion_and_rotation(df=df, position_features=config.POSITION_FEATURES, rotation_features=config.ROTATION_FEATURES, scaler_type=scaler)
     
     if df.empty:
         print(f"No data found for activity '{activity}'.")
+        return [], np.empty((0, len(features)), float), {}
+
+    df = etl.scaler_on_postion_and_rotation(df=df, position_features=config.POSITION_FEATURES, rotation_features=config.ROTATION_FEATURES, scaler_type=scaler)
+
+    if df.empty:
+        print(f"No data remaining after scaling for activity '{activity}'.")
         return [], np.empty((0, len(features)), float), {}
 
     df = df.reset_index(drop=True)  
@@ -446,11 +453,11 @@ def segmentation_on_activity(file_path: str, features: list, activity: str, thre
     unique_log_numbers = sorted(df['LogNumber'].unique())
 
     for i, log_number in enumerate(unique_log_numbers):
-        
+        # print(f"Processing log number {log_number} for activity '{activity}' (log {i+1}/{len(unique_log_numbers)})...")
         # Filter data for the current log number and features
         df_log = etl.filter_data_on_log_number(df, log_number=log_number)
         df_log = etl.filter_data_on_features(df_log, features=features)
-        
+        # print(f"  - Data shape after filtering for log number {log_number}: {df_log.shape}")
         if df_log.empty:
             print(f"No data found for log number {log_number}")
             continue
@@ -494,17 +501,17 @@ def segment_all_users(activity: str, features: list, threshold: float, scaler: s
     all_files = config.get_all_files()
     
     if not all_files:
-        print("No files found in the raw data directory.")
+        # print("No files found in the raw data directory.")
         return
     
     for file_path in all_files:
         username = file_path.parent.name
 
-        print(f"===== Processing user: {username}, act: {activity}, scaler: {scaler}, threshold: {threshold} =====")
+        # print(f"===== Processing user: {username}, act: {activity}, scaler: {scaler}, threshold: {threshold} =====")
         try: 
             logNumber_numberSegments, rsv, lsv_on_activity = segmentation_on_activity(file_path=file_path, features=features[1:], activity=activity, threshold=threshold, scaler=scaler)
             for log_number, number_of_segments in logNumber_numberSegments:
-                print(f"Log Number: {log_number}, Number of Segments: {number_of_segments}")
+                # print(f"Log Number: {log_number}, Number of Segments: {number_of_segments}")
                 segmentation_list.append((username, activity, threshold, scaler, log_number, number_of_segments))
 
             # Aggiungi il dizionario LSV per questo utente
@@ -521,7 +528,7 @@ def segment_all_users(activity: str, features: list, threshold: float, scaler: s
 
     complete_filepath = filepath + f"/segments_number/{activity}/{scaler}" + f"/segmentation_results_{activity}_{threshold}_{scaler}.csv"
     rsv_path = filepath + f"/right_singular_vector/{activity}/{scaler}" + f"/rsv_{activity}_{threshold}_{scaler}.csv"
-    lsv_path = filepath + f"/left_singular_vector/{activity}/{scaler}" + f"/lsv_{activity}_{threshold}_{scaler}.pkl"
+    lsv_path = filepath + f"/left_singular_vector/{activity}/{scaler}" + f"/lsv_{activity}_{threshold}_{scaler}.csv"
 
     directory = os.path.dirname(complete_filepath)
     os.makedirs(directory, exist_ok=True)
@@ -557,7 +564,7 @@ def segment_all_users(activity: str, features: list, threshold: float, scaler: s
             
             if seg_key in lsv_all_users[username][log_key]:
                 lsv_vector = lsv_all_users[username][log_key][seg_key]
-                print(f"Processing LSV for {username}, {log_key}, {seg_key}")
+                # print(f"Processing LSV for {username}, {log_key}, {seg_key}")
                 
                 # Segment the LSV using ah.segment_lsv()
                 segmented_lsv = ah.segment_lsv(lsv_vector)
@@ -570,7 +577,7 @@ def segment_all_users(activity: str, features: list, threshold: float, scaler: s
                         for segment in segments:  # Process each segment individually
                             if len(segment) > 0:
                                 segment_mean = np.mean(segment)
-                                print(f"Username: {username}, logNum: {log_number}, segNum: {seg_key}, Category: {category}, Segment Mean: {segment_mean}\n")
+                                # print(f"Username: {username}, logNum: {log_number}, segNum: {seg_key}, Category: {category}, Segment Mean: {segment_mean}\n")
                                 #print(f"Segment: {segment}\n")
                                 
                                 # Create a row for this segment mean
@@ -616,13 +623,13 @@ def get_or_compute_segmentation(activity: str, features: list, threshold: float,
     """
     # Build file paths
     rsv_path = filepath + f"/right_singular_vector/{activity}/{scaler}" + f"/rsv_{activity}_{threshold}_{scaler}.csv"
-    lsv_path = filepath + f"/left_singular_vector/{activity}/{scaler}" + f"/lsv_{activity}_{threshold}_{scaler}.pkl"
+    lsv_path = filepath + f"/left_singular_vector/{activity}/{scaler}" + f"/lsv_{activity}_{threshold}_{scaler}.csv"
     
     # Check if both files exist
     if os.path.exists(rsv_path) and os.path.exists(lsv_path):
-        print(f"Loading existing segmentation data for {activity} (threshold={threshold}, scaler={scaler})...")
-        print(f"  RSV file: {rsv_path}")
-        print(f"  LSV file: {lsv_path}")
+        # print(f"Loading existing segmentation data for {activity} (threshold={threshold}, scaler={scaler})...")
+        # print(f"  RSV file: {rsv_path}")
+        # print(f"  LSV file: {lsv_path}")
         
         # Load RSV DataFrame from CSV
         rsv_df = pd.read_csv(rsv_path)
@@ -631,15 +638,15 @@ def get_or_compute_segmentation(activity: str, features: list, threshold: float,
         with open(lsv_path, 'rb') as f:
             lsv_all_users = pickle.load(f)
         
-        print(f"Segmentation data loaded successfully!")
-        print(f"  - RSV DataFrame shape: {rsv_df.shape}")
-        print(f"  - Number of users in LSV: {len(lsv_all_users)}")
+        # print(f"Segmentation data loaded successfully!")
+        # print(f"  - RSV DataFrame shape: {rsv_df.shape}")
+        # print(f"  - Number of users in LSV: {len(lsv_all_users)}")
         
         return rsv_df, lsv_all_users
     else:
         # Files don't exist, compute segmentation
-        print(f"Segmentation files not found. Computing segmentation for {activity}...")
-        print(f"  (threshold={threshold}, scaler={scaler})")
+        # print(f"Segmentation files not found. Computing segmentation for {activity}...")
+        # print(f"  (threshold={threshold}, scaler={scaler})")
         
         rsv_df, lsv_all_users = segment_all_users(
             activity=activity, 
@@ -649,10 +656,9 @@ def get_or_compute_segmentation(activity: str, features: list, threshold: float,
             filepath=filepath
         )
         
-        print(f"Segmentation computed and saved!")
+        # print(f"Segmentation computed and saved!")
         
         return rsv_df, lsv_all_users
-
 
 def segment_everything(activity: list, features:list, threshold: list, scaler: list, filepath: str):
     """
@@ -670,14 +676,14 @@ def segment_everything(activity: list, features:list, threshold: list, scaler: l
             for scal in scaler:
                 if((scal == "quantile" and thresh > 0.5) or (scal in ["minmax", "standard", "robust"] and thresh < 0.5)):
                     continue
-                print("\n==================================================\n")
+                # print("\n==================================================\n")
                 rsv_df, lsv_all_users = segment_all_users(activity=act, features=features, threshold=thresh, scaler=scal, filepath=filepath) 
 
 def main(): 
     #activities = ["sphereActivity", "ladderActivity", "trashActivity", "pilotActivity"]
     activities = ["sphereActivity"]
     #thresholds = [0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8]
-    thresholds = [0.6]
+    thresholds = [0.5]
     #scalers = ['standard', 'robust', 'quantile']
     scalers = ['standard']
 
@@ -725,7 +731,7 @@ def test_lsv_with_plot():
         df_log = etl.filter_data_on_features(df_log, features=features[1:])
         
         if df_log.empty:
-            print(f"No data found for log number {log_number}")
+            # print(f"No data found for log number {log_number}")
             continue
         
         # Reset index to start from 0
@@ -733,11 +739,11 @@ def test_lsv_with_plot():
         
         # Perform segmentation and get LSV dictionary
         _, n, _, lsv_dict = segmentation(df_log, threshold=threshold)
-        print(f"Log Number {log_number}: Number of segments: {n}")
+        # print(f"Log Number {log_number}: Number of segments: {n}")
         
         # Plot LSV for each segment using the existing function
         for segment_name, lsv_vector in lsv_dict.items():
-            print(f"Plotting segment: {segment_name} (shape: {lsv_vector.shape})")
+            # print(f"Plotting segment: {segment_name} (shape: {lsv_vector.shape})")
             
             # Create a matrix with the LSV as the first column (as expected by lsv_segmentation_plot)
             lsv_matrix = lsv_vector.reshape(-1, 1)
@@ -745,7 +751,7 @@ def test_lsv_with_plot():
             # Use the existing lsv_segmentation_plot function
             lsv_segmentation_plot(lsv_matrix)
         
-        print(f"Completed plotting for log number {log_number}\n")
+        # print(f"Completed plotting for log number {log_number}\n")
 
 def test_lsv(): 
     threshold = 0.6
@@ -770,7 +776,7 @@ def test_lsv():
         df_log = etl.filter_data_on_features(df_log, features=features[1:])
         
         if df_log.empty:
-            print(f"No data found for log number {log_number}")
+            # print(f"No data found for log number {log_number}")
             continue
         
         # Reset index to start from 0
@@ -778,11 +784,11 @@ def test_lsv():
         
         # Perform segmentation and get LSV dictionary
         _, n, _, lsv_dict = segmentation(df_log, threshold=threshold)
-        print(f"Log Number {log_number}: Number of segments: {n}")
+        # print(f"Log Number {log_number}: Number of segments: {n}")
         
         # Plot LSV for each segment
         for segment_name, lsv_vector in lsv_dict.items():
-            print(f"Plotting segment: {segment_name} (shape: {lsv_vector.shape})")
+            # print(f"Plotting segment: {segment_name} (shape: {lsv_vector.shape})")
             
             # Create a matrix with the LSV as the first column for plotting
             lsv_matrix = lsv_vector.reshape(-1, 1)
@@ -808,33 +814,27 @@ def test_lsv():
             plt.show()
             plt.close()
         
-        print(f"Completed plotting for log number {log_number}\n")
+        # print(f"Completed plotting for log number {log_number}\n")
 
 def test(): 
-    threshold = 0.7
+    threshold = 0.5
     scaler = "standard"
     target_activity = "sphereActivity"
+    file_path = "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/raw_filtered_openday/grims5/grims5_log_20260208_1024_UJE1BA5PET.csv"
+    #file_path = "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/raw_filtered_openday/p/p_log_20260210_1125_4OZDNJU79G.csv"
+    log_n, rsvs, _ = segmentation_on_activity(file_path=file_path, threshold=threshold, scaler=scaler, activity=target_activity, features=config.FEATURES[1:])
 
-    segmentation_result = f"/tmp"
-    os.makedirs(segmentation_result, exist_ok=True)
-
-    features = config.FEATURES
-    filepath = config.BOTH_SEGMENTATION_DIR
-
-    rsv_df, lsv_all_user = segment_all_users(
-            activity=target_activity, 
-            features=features,
-            threshold=threshold, 
-            scaler=scaler, 
-            filepath=filepath
-        )
-    print(lsv_all_user)
+    print(f"Done..\n")
+    print(f"Log number and segments: {log_n}\n")
+    print(f"RSVs shape: {rsvs.shape}\n")
+  
+    # print(lsv_all_user)
     
 if __name__ == "__main__":
-    print("====== Segmentation Module ======")
+    # print("====== Segmentation Module ======")
     #main()
-    test_lsv()
-
+    #test_lsv()
+    test()
     # plot_seg(username="rkiper", features=config.FEATURES, activity="sphereActivity", threshold=0.6, scaler="standard")
     #plot_two_users_comparison(username1="grims", log_number1=2, username2="rkiper", log_number2=2, activity="sphereActivity", threshold=0.6, scaler="standard")
     

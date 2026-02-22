@@ -265,7 +265,6 @@ def compute_transitions(clustering_algorithm, processed_data_path, result_direct
     
     return df_transition, df_probs, df_initial, sequence_stats
 
-
 def segment_test_data(test_activity, features, scaler, new_threshold):
     """
     Segment test data for all users.
@@ -295,7 +294,6 @@ def segment_test_data(test_activity, features, scaler, new_threshold):
         print(f"LogNumber: {x}, Total number of segments: {len(rsv_df[rsv_df['LogNumber'] == x])}")
     
     return rsv_df, lsv_users
-
 
 def classify_test_points(rsv_df, processed_data_path, result_directory, target_activity, 
                          threshold, scaler, clustering_algorithm, eps, min_samples, k_value, feature_len):
@@ -369,7 +367,6 @@ def classify_test_points(rsv_df, processed_data_path, result_directory, target_a
     print(log_df)
     
     return log_df, class_stats, class_threshold
-
 
 def compute_user_states_and_probabilities(lsv_users, log_df, adj_df, df_probs, df_initial, 
                                          sequence_stats, ghost_exp, test_activity):
@@ -448,7 +445,6 @@ def compute_user_states_and_probabilities(lsv_users, log_df, adj_df, df_probs, d
     
     return df_sequence_ghost_end
 
-
 def save_results(df_sequence_ghost_end, features, target_activity, test_activity, threshold, 
                 new_threshold, clustering_algorithm, eps, min_samples, k_value, scaler, ghost_exp):
     """
@@ -521,7 +517,6 @@ def save_results(df_sequence_ghost_end, features, target_activity, test_activity
     
     return df_save, path
 
-
 def run_model_pipeline(
     target_activity="sphereActivity",
     test_activity="sphereActivity",
@@ -560,7 +555,6 @@ def run_model_pipeline(
     processed_data_path = config.PROCESSED_DATA_DIR
     
     # Perform segmentation
-    print(f"===== Processing activity: {target_activity}, threshold: {threshold}, scaler: {scaler} =====\n")
     rsv_df, lsv_all_user, rsv_path = perform_segmentation(
         target_activity, features, threshold, scaler, segmentation_result, histogram_dir, enable_plots
     )

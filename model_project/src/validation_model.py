@@ -24,27 +24,27 @@ def sequence_probability_ghost_state_end(group_df: pd.DataFrame, prob_matrix_df:
     # Verifica che tutti gli stati siano validi
     for state in sequence:
         if state not in prob_matrix_df.columns:
-            print(f"State {state} not found in transition matrix.")
+            # print(f"State {state} not found in transition matrix.")
             return np.nan, N_states, ghost_count
         
     
 
     if N_states == ghost_count:
-        print(f"All states are ghost states. Returning 0 probability.")
+        # print(f"All states are ghost states. Returning 0 probability.")
         return 0.0, N_states, ghost_count
     elif N_states == 1: 
-        print(f"Only one state present. Returning 0 probability.")
+        # print(f"Only one state present. Returning 0 probability.")
         return 0.0, N_states, ghost_count
 
     # Calcolo della penalità da applicare nei salti ghost
     ghost_penalty = ghost_func(ghost_count, N_states, exp=exp, states=avg_sequence_length)
 
-    print(f"N_states: {N_states} - Ghost Count: {ghost_count} - Ghost Penalty: {ghost_penalty} - States: {states}")
+    # print(f"N_states: {N_states} - Ghost Count: {ghost_count} - Ghost Penalty: {ghost_penalty} - States: {states}")
 
     # Calcolo probabilità iniziale
     init_prob_map = dict(zip(initial_probs_df['State'], initial_probs_df['Initial_Probability']))
     prob = init_prob_map.get(sequence[0], 0)
-    print(f"Initial Probability for {sequence[0]}: {prob}")
+    # print(f"Initial Probability for {sequence[0]}: {prob}")
 
     if prob == 0:
         return 0.0, N_states, ghost_count
@@ -57,9 +57,9 @@ def sequence_probability_ghost_state_end(group_df: pd.DataFrame, prob_matrix_df:
         to_state = sequence[i + 1]
         trans_prob = prob_matrix_df.at[from_state, to_state]
         prob *= trans_prob
-        print(f"probability from {from_state} to {to_state}: {trans_prob}, cumulative probability: {prob}")
+        # print(f"probability from {from_state} to {to_state}: {trans_prob}, cumulative probability: {prob}")
         if prob == 0:
-            print(f"Transition probability from {from_state} to {to_state} is zero, breaking the loop.")
+            # print(f"Transition probability from {from_state} to {to_state} is zero, breaking the loop.")
             break
         #print(f"probability from {from_state} to {to_state}: {trans_prob}, cumulative probability: {prob}")
     #print(f"Ghost penalty: {ghost_penalty} - Probability: {prob} - Adjusted Probability: {prob * ghost_penalty}")
@@ -72,10 +72,10 @@ def sequence_probability_ghost_state(group_df: pd.DataFrame, prob_matrix_df: pd.
     # Verifica che tutti gli stati siano validi
     for state in sequence:
         if state not in prob_matrix_df.columns:
-            print(f"State {state} not found in transition matrix.")
+            # print(f"State {state} not found in transition matrix.")
             return np.nan
     
-    #print(sequence)
+    ## print(sequence)
 
     N_states = len([s for s in sequence])
     ghost_state = "(-1, None)"
@@ -84,7 +84,7 @@ def sequence_probability_ghost_state(group_df: pd.DataFrame, prob_matrix_df: pd.
     # Calcolo della penalità da applicare nei salti ghost
     ghost_penalty = ghost_func(ghost_count, N_states)
 
-    print(f"N_states: {N_states} - Ghost Count: {ghost_count} - Ghost Penalty: {ghost_penalty}")
+    # print(f"N_states: {N_states} - Ghost Count: {ghost_count} - Ghost Penalty: {ghost_penalty}")
 
     init_prob_map = dict(zip(initial_probs_df['State'], initial_probs_df['Initial_Probability']))
     first_state = sequence[0]
@@ -137,7 +137,7 @@ def sequence_probability_for_log(group_df: pd.DataFrame, prob_matrix_df: pd.Data
     # Verifica che tutti gli stati siano validi
     for state in sequence:
         if state not in prob_matrix_df.columns:
-            print(f"State {state} not found in transition matrix.")
+            # print(f"State {state} not found in transition matrix.")
             return np.nan
 
     # Calcolo probabilità iniziale
@@ -245,10 +245,10 @@ def classify_point(x: np.array, class_stats: dict, threshold: float):
         sigma = params["covariance"]
         try:
             ll = multivariate_normal.logpdf(x, mean=mu, cov=sigma, allow_singular=True)
-            print(f"Log likelihood for label {label}: {ll}")
+            # print(f"Log likelihood for label {label}: {ll}")
         except np.linalg.LinAlgError as e:
             ll = -np.inf
-            print(f"Error computing logpdf for label {label}: {e}")
+            # print(f"Error computing logpdf for label {label}: {e}")
 
         if ll > best_log_likelihood:
             best_log_likelihood = ll
@@ -256,10 +256,10 @@ def classify_point(x: np.array, class_stats: dict, threshold: float):
 
 
     if best_log_likelihood < threshold:
-        print("Best label: -1\n")
+        # print("Best label: -1\n")
         return -1  # outlier
-    else: 
-        print(f"Best label: {best_label}\n")
+    #else: 
+        # print(f"Best label: {best_label}\n")
     return best_label
 
 def segment_user(username:str, file_path: str, features: list, activity: str, scaler: str, threshold: float):
@@ -270,8 +270,8 @@ def segment_user(username:str, file_path: str, features: list, activity: str, sc
 
         return rsv_df, lsv_user
     except Exception as e:
-        print(f"Failed with error: {e}")
-        return
+        # print(f"Failed with error: {e}")
+        return None, None
     
 def compute_user_state(lsv_mean: dict, log_df: pd.DataFrame, adj_df: pd.DataFrame, to_round:bool=False):
 
@@ -343,13 +343,13 @@ def main():
 
     file_path = config.find_file_from_username(username)
     
-    print(f"===== Segmentating user: {username}, activity: {activity}, scaler: {scaler}, threshold: {threshold} =====")
+    # print(f"===== Segmentating user: {username}, activity: {activity}, scaler: {scaler}, threshold: {threshold} =====")
     rsv_df = segment_user(file_path=file_path, features=features, activity=activity, scaler=scaler, threshold=threshold)
 
-    print("\n== RSV DataFrame: ==")
-    print(rsv_df)
+    # print("\n== RSV DataFrame: ==")
+    # print(rsv_df)
 
-    print("\n===== Maximum Likelihood Classifier =====")
+    # print("\n===== Maximum Likelihood Classifier =====")
     eps = 0.25
     min_samples = 8
     file_path = config.PROCESSED_DATA_DIR + f"/dbscan_results_rotation/{recon_activity}/{scaler}" 
@@ -360,12 +360,12 @@ def main():
     feature_columns = df.columns[-9:]  # Assuming the last 9 columns are features
     class_stats = compute_class_stats(df, feature_columns)  
 
-    print("\n== Classify New Points ==")
+    # print("\n== Classify New Points ==")
     for index, row in rsv_df.iterrows():
         point = row[-9:].to_numpy()
 
         label = classify_point(point, class_stats)
-        print(f"Point {index} - LogNumber: {row['LogNumber']} - Classified as: {label}")
+        # print(f"Point {index} - LogNumber: {row['LogNumber']} - Classified as: {label}")
 
     log_df = pd.DataFrame({
         'LogNumber': rsv_df['LogNumber'],
@@ -389,7 +389,7 @@ def main():
     results = []
 
     for log_number, group in log_df.groupby("LogNumber"):
-        print(f"\nProcessing LogNumber: {log_number}..")
+        # print(f"\nProcessing LogNumber: {log_number}..")
         prob = sequence_probability_for_log(group, prob_matrix_df, initial_probs_df)
         results.append((log_number, prob))
 
@@ -401,8 +401,8 @@ def main():
     df_sequence_probs["Length"] = log_df.groupby("LogNumber").size().values
     df_sequence_probs["AvgLogProb"] = df_sequence_probs["LogProb"] / df_sequence_probs["Length"]
 
-    print("\n\n== Sequence Probabilities with LogProb and Length: ==")
-    print(df_sequence_probs)
+    # print("\n\n== Sequence Probabilities with LogProb and Length: ==")
+    # print(df_sequence_probs)
 
     """# WITH GHOST STATE
     ghost_results = []
@@ -423,10 +423,10 @@ def main():
     print(df_sequence_ghost)"""
 
     # WITH GHOST STATE PENALTY AT THE END
-    print("\n\n== GHOST STATE PENALTY AT THE END ==")
+    # print("\n\n== GHOST STATE PENALTY AT THE END ==")
     ghost_end_results = []
     for log_number, group in log_df.groupby("LogNumber"):
-        print(f"GHOST STATE: Processing LogNumber: {log_number}")
+        # print(f"GHOST STATE: Processing LogNumber: {log_number}")
         prob = sequence_probability_ghost_state_end(group, prob_matrix_df, initial_probs_df)
         ghost_end_results.append((log_number, prob))
 
@@ -439,13 +439,13 @@ def main():
     df_sequence_ghost_end["Length"] = log_df.groupby("LogNumber").size().values
     df_sequence_ghost_end["AvgLogProb"] = df_sequence_ghost_end["LogProb"] / df_sequence_ghost_end["Length"]
 
-    print("\n== GHOST STATE PENALTY AT THE END: Sequence Probabilities with LogProb and Length: ==")
-    print(df_sequence_ghost_end)
+    # print("\n== GHOST STATE PENALTY AT THE END: Sequence Probabilities with LogProb and Length: ==")
+    # print(df_sequence_ghost_end)
     
 
     return 
 
 if __name__ == "__main__":
-    print("== Starting Validation ==\n\n") 
+    # print("== Starting Validation ==\n\n") 
     main()
     exit(1)

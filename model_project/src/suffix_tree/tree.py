@@ -16,7 +16,7 @@ class Tree:
                     if not self.search_node(new_value) and not child.is_leaf():
                         new_node = TreeNode(value=new_value, prob=0.0, suffix=child.value, structural=True)
                         child.addChild(new_node)
-                        print(f"Added structural node '{new_value}' under node '{child.value}'")
+                        # print(f"Added structural node '{new_value}' under node '{child.value}'")
             self.add_structural_node(child, depth + 1, alphabet)
 
     def search_node(self, node_value): 
@@ -80,8 +80,8 @@ class Tree:
         """
         if node is None:
             node = self.root
-            print(f"Suffix Tree (max length: {self.L})")
-            print(f"└── {node.value} (t_prob: {node.transitions_probs}, suffix: None)")
+            # print(f"Suffix Tree (max length: {self.L})")
+            # print(f"└── {node.value} (t_prob: {node.transitions_probs}, suffix: None)")
             prefix = "    "
             for i, child in enumerate(node.children):
                 is_last_child = (i == len(node.children) - 1)
@@ -91,7 +91,7 @@ class Tree:
             prob_str = f"{node.transitions_probs}" if node.prob is not None else "None"
             suffix_str = f"'{node.suffix}'" if node.suffix is not None else "None"
             
-            print(f"{prefix}{connector}{node.value} (t_prob: {prob_str}, suffix: {suffix_str})")
+            # print(f"{prefix}{connector}{node.value} (t_prob: {prob_str}, suffix: {suffix_str})")
             
             if node.children:
                 extension = "    " if is_last else "│   "
@@ -104,16 +104,16 @@ class Tree:
         """Stampa l'albero in modo semplice con indentazione."""
         if node is None:
             node = self.root
-            print(f"\n{'='*50}")
-            print(f"Suffix Tree (L={self.L}, Total nodes: {self.len_tree()})")
-            print(f"{'='*50}")
+            # print(f"\n{'='*50}")
+            # print(f"Suffix Tree (L={self.L}, Total nodes: {self.len_tree()})")
+            # print(f"{'='*50}")
         
         indent = "  " * level
         prob_str = f"{node.prob:.4f}" if node.prob is not None else "None"
         suffix_str = f"'{node.suffix}'" if node.suffix else "root"
         children_count = len(node.children)
         
-        print(f"{indent}{'└─' if level > 0 else ''}[{node.value}] prob={prob_str}, suffix={suffix_str}, children={children_count}")
+        # print(f"{indent}{'└─' if level > 0 else ''}[{node.value}] prob={prob_str}, suffix={suffix_str}, children={children_count}")
         
         for child in node.children:
             self.print_tree_simple(child, level + 1)

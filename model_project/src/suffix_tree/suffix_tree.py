@@ -22,20 +22,27 @@ def PST_Probability_ghost(PST, sequence:list, L:int, states, ghost_exp=4, avg_se
     ghost_count = sequence.count(ghost_state)
 
     if N_states == ghost_count:
-        print(f"All states are ghost states. Returning infinite self-information.")
+        # print(f"All states are ghost states. Returning infinite self-information.")
         return np.inf, N_states, ghost_count
     elif N_states == 1: 
-        print(f"Only one state present. Returning infinite self-information.")
+        # print(f"Only one state present. Returning infinite self-information.")
         return np.inf, N_states, ghost_count
+    elif N_states == 0:
+        # print(f"No states present. Returning infinite self-information.")
+        return None, N_states, ghost_count
+
     
     # Calcolo della penalità da applicare nei salti ghost
     ghost_penalty = ghost_func(ghost_count, N_states, exp=ghost_exp, states=avg_sequence_length)
 
-    print(f"N_states: {N_states} - Ghost Count: {ghost_count} - Ghost Penalty: {ghost_penalty} - States: {states}")
+    # print(f"N_states: {N_states} - Ghost Count: {ghost_count} - Ghost Penalty: {ghost_penalty} - States: {states}")
 
     prob = PST_Probability(PST, sequence, L) * ghost_penalty
+    if prob == 0: 
+        # print(f"Probability is zero after applying ghost penalty. Returning infinite self-information.")
+        return np.inf, N_states, ghost_count
     self_info = np.abs(np.log(prob)) / (N_states)
-    print(f"Log-probability with ghost penalty: {prob} - Self-information: {self_info}")
+    # print(f"Log-probability with ghost penalty: {prob} - Self-information: {self_info}")
     
     return self_info, N_states, ghost_count
 
@@ -46,21 +53,21 @@ def PST_Probability(PST, sequence, L):
     """
     tot_prob = 1
     T = len(sequence)
-    print(f"\n\nComputing log-probability for sequence: {sequence}")
+    # print(f"\n\nComputing log-probability for sequence: {sequence}")
     
     for t in range(T):
         if t == 0:
             # First symbol: always use root
             node = PST.root
             symbol = sequence[t]
-            print(f"\n[{t}] First symbol, using root")
+            # print(f"\n[{t}] First symbol, using root")
         else:
             # Get history: last min(L, t) symbols before position t
             history_length = min(L, t)
             history = tuple(sequence[t - history_length:t])  # Convert to tuple
             
             candidate = history
-            print(f"\nHistory for position {t}: {history}")
+            # print(f"\nHistory for position {t}: {history}")
             node = None
             
             # Search for the longest suffix in the PST
@@ -70,7 +77,7 @@ def PST_Probability(PST, sequence, L):
                 inverted_str = '_'.join(inverted_candidate)
                 if PST.search_node(inverted_str):
                     node = PST.find_father_node(inverted_str)
-                    print(f"[{t}] Found Candidate: {candidate} - (inverted candidate {inverted_candidate})")
+                    # print(f"[{t}] Found Candidate: {candidate} - (inverted candidate {inverted_candidate})")
                     break
                 # Get suffix by removing first element
                 candidate = candidate[1:]
@@ -84,11 +91,11 @@ def PST_Probability(PST, sequence, L):
         # Get transition probability for this symbol
         if symbol in node.transitions_probs:
             prob = node.transitions_probs[symbol]
-            print(f"[{t}] P({symbol}|{node.value}) = {prob}")
+            # print(f"[{t}] P({symbol}|{node.value}) = {prob}")
 
             if prob > 0:
                 tot_prob *= prob 
-                print(f"[{t}] Cumulative probability: {tot_prob}")
+                # print(f"[{t}] Cumulative probability: {tot_prob}")
             else:
                 # Handle zero probability (should not happen with gamma_min)
                 tot_prob *= 1e-10  # Use small value to avoid log(0)
@@ -97,7 +104,7 @@ def PST_Probability(PST, sequence, L):
             tot_prob *= 1e-10
     
 
-    print(f"\n\nTotal log-probability: {tot_prob}")
+    # print(f"\n\nTotal log-probability: {tot_prob}")
     #print(f"Self-information (average log-probability per symbol): {self_info}\n")
     return tot_prob
 
@@ -124,7 +131,7 @@ def define_border(alphabet, contexts_prob, pmin=0.000001):
 def add_node(node_value, prob, father_node: TreeNode):
     tmp_node = TreeNode(value=node_value, prob=prob, suffix=father_node.value)
     father_node.addChild(tmp_node)
-    print(f"Added node '{node_value}' under father node '{father_node.value}'")
+    # print(f"Added node '{node_value}' under father node '{father_node.value}'")
 
 def find_all_suffixes(s):
     """ 
@@ -155,7 +162,7 @@ def border_expansion(suffix_tree, border, s, alphabet, emp, L, pmin=0.000001):
             if p_new_suffix > pmin and new_suffix not in border:
 
                 border.append(new_suffix)
-                print(f"Border expanded: {border}")
+                # print(f"Border expanded: {border}")
 
 def add_suffixes_and_node(suffix_tree, s, emp, L):
     # s is now a tuple of symbols
@@ -172,7 +179,7 @@ def add_suffixes_and_node(suffix_tree, s, emp, L):
             x_str = '_'.join(x) if len(x) > 0 else ''
             find = suffix_tree.search_node(x_str)
             if not find:
-                print(f"Adding suffix {x} to the tree - suffix: {x[1:]}")
+                # print(f"Adding suffix {x} to the tree - suffix: {x[1:]}")
                 if len(x[1:]) == 0:
                     father_node = suffix_tree.root
                 else:
@@ -211,15 +218,15 @@ def compute_context_probabilities(contexts, sequences):
                 if tuple(seq[i:i+len(s)]) == s:
                     tmp += 1
                     cont += 1
-            print(f"Suffix {s} found {tmp} times in the sequence {seq}.")
+            # print(f"Suffix {s} found {tmp} times in the sequence {seq}.")
 
             window_size += len(seq) - len_s + 1
         
-        print(f"Total number of context windows for suffix {s}: {window_size}\nTotal occurrences: {cont}\n")
+        # print(f"Total number of context windows for suffix {s}: {window_size}\nTotal occurrences: {cont}\n")
 
         p_s = cont / window_size if window_size > 0 else 0
         s_prob[s] = p_s
-        print(f"Probability of suffix {s}: {p_s}\n")
+        # print(f"Probability of suffix {s}: {p_s}\n")
     return s_prob
 
 def get_single_conditional_prob(emp, s, sigma):
@@ -281,7 +288,7 @@ def empirical_probs(context_occ, sequences, alphabet, L):
         scp = single_context_prob(context, extendend_cout, sequences, L) # i need to consider all the occurrences including last symbols
         pss = single_conditional_probs(context, context_occ, extended_context_occ, alphabet) 
         emp[context] = (scp, pss)
-        print(f"Context: {context}, P(s): {scp}, P(sigma|s): {pss}")
+        # print(f"Context: {context}, P(s): {scp}, P(sigma|s): {pss}")
     return emp
 
 def single_conditional_probs(context, context_occ, extended_context_occ, alphabet):
@@ -373,7 +380,7 @@ def compute_trans_probs(tree, node=None, alphabet=list, emp=dict, gamma_min=0.0)
                 p = cond_probs.get(father_tuple, {}).get(a, 0) # P( a | father)
             #print(f"P({a}|{father}) = {p} for node '{node.value}'")
             node.transitions_probs[a] = (1 - len(alphabet) * gamma_min) * p + gamma_min
-            print(f"Node {node.value} - Transition probability P({a}|{node.value}) = {node.transitions_probs[a]}")
+            # print(f"Node {node.value} - Transition probability P({a}|{node.value}) = {node.transitions_probs[a]}")
 
         else:
             # For root node, get P(a) - convert symbol to tuple
@@ -389,17 +396,17 @@ def phace_three(suffix_tree, alphabet, emp, gamma_min=0.0):
     #suffix_tree.print_tree()
     #print("\n")
     compute_trans_probs(suffix_tree, alphabet=alphabet, emp=emp, gamma_min=gamma_min)
-    print("\n\n\n")
+    # print("\n\n\n")
     suffix_tree.print_tree()
  
 def phace_two(alphabet, emp, L, pmin=0.000001, gamma_min=0.0, eps=0.0):
     suffix_tree = Tree(L=L)
     border = define_border(alphabet, get_context_probabilities(emp), pmin=pmin)
-    print(f"Initial border: {border}\n")
+    # print(f"Initial border: {border}\n")
     go = True
     while go:
         s = border[0]
-        print(f"\n----- Processing suffix {s} -----")
+        # print(f"\n----- Processing suffix {s} -----")
         border.remove(s)
         s_suffix = s[1:]
 
@@ -408,7 +415,7 @@ def phace_two(alphabet, emp, L, pmin=0.000001, gamma_min=0.0, eps=0.0):
             bool_sig_test = True
         else:
             bool_sig_test = significativity_test(s, emp, s_suffix, alphabet, gamma_min=gamma_min, eps=eps)
-        print(f"Significativity test for suffix {s}: {bool_sig_test}")
+        # print(f"Significativity test for suffix {s}: {bool_sig_test}")
 
         if bool_sig_test:
             add_suffixes_and_node(suffix_tree, s, emp, L)
@@ -433,8 +440,8 @@ def phase_zero(alphabet=None, sequences=None):
     if sequences is None:
         sequences = random_seq(nos=2)
 
-    for seq in sequences:
-        print(seq)
+    #for seq in sequences:
+        # print(seq)
     
     return alphabet, sequences
 
@@ -444,7 +451,7 @@ def create_tree(sequences = None, alphabet = None, L=int, pmin=0.000001, gamma_m
 
     # Phase 1
     context_occ, emp = phase_one(sequences, alphabet, L)
-    print(f"\n\n-----Empirical probabilities:\n{emp}-----\n\n")
+    # print(f"\n\n-----Empirical probabilities:\n{emp}-----\n\n")
     
     # Phase 2 
     # PST building 

@@ -14,7 +14,7 @@ def load_data(file_path: str):
     """
 
     try:
-        df = pd.read_csv(file_path, index_col=None)
+        df = pd.read_csv(file_path, index_col=None, low_memory=False)
         
         # le colonne numeriche sono tutte quelle che non sono 'Activity'
         numeric_columns = [col for col in df.columns if col not in ['Activity', 'Username']]
@@ -23,7 +23,7 @@ def load_data(file_path: str):
         for col in numeric_columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
         
-        print(f"Data successfully loaded - Shape: {df.shape}")
+        #print(f"Data successfully loaded - Shape: {df.shape}")
         return df
     except Exception as e:
         print(f"Error loading data: {e}")
@@ -98,7 +98,7 @@ def save_data(df: pd.DataFrame, file_path: str):
     
     try:
         df.to_csv(file_path, index=False)
-        print(f"Data saved to {file_path}")
+        #print(f"Data saved to {file_path}")
     except Exception as e:
         print(f"Error saving data: {e}")
 
@@ -135,12 +135,22 @@ def scaler_on_postion_and_rotation(df: pd.DataFrame, position_features: list, ro
     
     # Normalize rotation features
     if rotation_cols:
-        df[rotation_cols] = rotation_scaler.fit_transform(df[rotation_cols])
-        print("Rotation features normalized")
+        # CONTROLLO DIFENSIVO: verifica che ci siano dati validi
+        rotation_data = df[rotation_cols].dropna()
+        if len(rotation_data) > 0:
+            df[rotation_cols] = rotation_scaler.fit_transform(df[rotation_cols])
+            #print("Rotation features normalized")
+        else:
+            print(f"WARNING: No valid data in rotation features {rotation_cols}, skipping normalization")
     
     # Normalize position features  
     if position_cols:
-        df[position_cols] = position_scaler.fit_transform(df[position_cols])
-        print("Position features normalized")
+        # CONTROLLO DIFENSIVO: verifica che ci siano dati validi
+        position_data = df[position_cols].dropna()
+        if len(position_data) > 0:
+            df[position_cols] = position_scaler.fit_transform(df[position_cols])
+            #print("Position features normalized")
+        else:
+            print(f"WARNING: No valid data in position features {position_cols}, skipping normalization")
 
     return df

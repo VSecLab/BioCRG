@@ -34,6 +34,10 @@ def calculate_segment_means(lsv_dict: dict):
     for username, logs in lsv_dict.items():
         result_dict[username] = {}
         
+        if logs is None:
+            # print(f"WARNING: User {username} has None value in lsv_dict, skipping")
+            continue
+
         for log_num, segments in logs.items():
             result_dict[username][log_num] = {}
             
@@ -69,7 +73,7 @@ def adjectives_dict(best_labels: np.array, lsv_all_user: dict, df_origin: pd.Dat
         dict: A dictionary where keys are cluster labels and values are lists of LSVs corresponding to that cluster.
     """
     lsv_clusters_dict = {}
-    print("Creating LSV clusters dictionary...")
+    # print("Creating LSV clusters dictionary...")
 
     # Initialize dictionary with all unique cluster labels (including -1 for outliers)
     all_cluster_labels = np.unique(best_labels)

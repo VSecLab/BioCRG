@@ -10,8 +10,8 @@ ACTIVITY_THRESHOLDS = {
     'pilotActivity': 1066.8 * 0.15     
 }
 
-SOURCE_PATH = "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/raw_original"
-TARGET_PATH = "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/raw_filtered3"
+SOURCE_PATH = "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/raw_openday"
+TARGET_PATH = "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/raw_filtered_openday"
 
 def create_directory_structure():
     """Create the raw_filtered directory with same structure as raw"""
