@@ -5,7 +5,6 @@ data_logs/results/
 data_logs/bin_datalogs/
 model_project/src/old/
 model_project/src/test_dbscan.py
-model_project/src/run_model_nofile.py
 model_project/test_lsv_structure.py
 model_project/src/suffix_tree/temp.txt
 model_project/src/suffix_tree/example_usage.py

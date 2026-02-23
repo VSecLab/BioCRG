@@ -8,6 +8,7 @@ def doe(result_df: pd.DataFrame):
     doe_on_predictions_df = pd.DataFrame() 
 
     for index, row in result_df.iterrows():
+        print(f"Index: {index}")
         target_activity = row["Target_Activity"]
         test_activity = row["TestActivity"]
         threshold = row["Target_Threshold"]
@@ -51,10 +52,23 @@ def doe(result_df: pd.DataFrame):
 
 def join_results(): 
 
-    markov_df = pd.read_csv(config.RESULTS_DIR + f"/grid_results/results_markov.csv")
-    suffix_df = pd.read_csv(config.RESULTS_DIR + f"/grid_results/results_suffix.csv")
+    markov_df = pd.read_csv(config.RESULTS_DIR + f"/grid_results/results_markov_mp.csv")
+    suffix_df = pd.read_csv(config.RESULTS_DIR + f"/grid_results/results_suffix_mp.csv")
 
-    joined_df = pd.concat([markov_df, suffix_df], axis=0)
+    # Prendi le colonne di suffix_df come riferimento
+    suffix_columns = suffix_df.columns.tolist()
+    
+    # Riorganizza markov_df per avere le stesse colonne di suffix_df nello stesso ordine
+    # Aggiungi le colonne mancanti con valore None
+    for col in suffix_columns:
+        if col not in markov_df.columns:
+            markov_df[col] = None
+    
+    # Riordina le colonne di markov_df per matchare quelle di suffix_df
+    markov_df = markov_df[suffix_columns]
+
+    # Concatena i due dataframe
+    joined_df = pd.concat([markov_df, suffix_df], axis=0, ignore_index=True)
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
     joined_df.to_csv(path, header=True, index=False)
@@ -63,6 +77,8 @@ def join_results():
     return joined_df
 
 if __name__ == "__main__":
-    #join_results()
-    result_df = pd.read_csv(path)
-    doe(result_df)
+    #rename_mode()
+    
+    join_results()
+    #result_df = pd.read_csv(path)
+    #doe(result_df)

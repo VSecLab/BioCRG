@@ -12,6 +12,11 @@ import pickle
 MIN_NUMBER_SAMPLES = config.MIN_NUMBER_SAMPLES 
 PLT_WIDTH = 16
 PLT_HEIGHT = 6
+
+
+class SegmentationStuckError(Exception):
+    """Raised when segmentation fails to find a new segment after max iterations."""
+    pass
      
 
 def plot_segmentation_for_all_logs(df: pd.DataFrame, activity: str, features: list, threshold: float):
@@ -104,7 +109,11 @@ def plot_segmentation_separate_figures(df: pd.DataFrame, activity: str, features
         # print(f"Processing log number {log_number}, shape: {df_log.shape}")
         
         # Compute segmentation index
-        segmentation_index_list, numberOfSegments, _, _ = segmentation(df_log, threshold)
+        try:
+            segmentation_index_list, numberOfSegments, _, _ = segmentation(df_log, threshold)
+        except SegmentationStuckError as e:
+            print(f"WARNING: Skipping log number {log_number} in separate figure plot: {e}")
+            continue
         
         # Create a new figure for each log
         plt.figure(figsize=(PLT_WIDTH, PLT_HEIGHT))
@@ -234,8 +243,12 @@ def plot_two_users_comparison(username1: str, log_number1: int, username2: str, 
     # print(f"User '{username2}' log {log_number2} shape: {df2_log.shape}")
 
     # Compute segmentation indices
-    seg_index_list1, num_segments1, _, _ = segmentation(df1_log, threshold)
-    seg_index_list2, num_segments2, _, _ = segmentation(df2_log, threshold)
+    try:
+        seg_index_list1, num_segments1, _, _ = segmentation(df1_log, threshold)
+        seg_index_list2, num_segments2, _, _ = segmentation(df2_log, threshold)
+    except SegmentationStuckError as e:
+        print(f"ERROR: Segmentation stuck in comparison plot: {e}")
+        return
 
     # Create the comparison plot
     plt.figure(figsize=(PLT_WIDTH, PLT_HEIGHT))
@@ -353,8 +366,21 @@ def lsv_segmentation_plot(matrix: np.ndarray):
     plt.close()
     return 
 
-def segmentation(df: pd.DataFrame, threshold: float): 
-
+def segmentation(df: pd.DataFrame, threshold: float, max_iterations_without_segment: int = 1000): 
+    """
+    Perform segmentation on a DataFrame.
+    
+    Args:
+        df: Input DataFrame with data to segment
+        threshold: Segmentation threshold value
+        max_iterations_without_segment: Maximum iterations without finding a new segment before raising exception (default: 2000)
+    
+    Returns:
+        tuple: (segmentationIndexList, numberOfSegments, right_singular_vector, lsv_dict)
+    
+    Raises:
+        SegmentationStuckError: If segmentation fails to find a new segment after max_iterations_without_segment
+    """
     segmentationMatrix = np.empty((0, df.shape[1] - 1), float) 
 
     segmentationIndexList = []
@@ -364,6 +390,7 @@ def segmentation(df: pd.DataFrame, threshold: float):
     lsv_dict = {}  # Dizionario per memorizzare i vettori singolari sinistri
 
     searchNewSegment = True  
+    iterations_since_last_segment = 0  # Counter for iterations without finding a new segment
 
     sigma1 = 0
     sigma2 = 0
@@ -385,6 +412,7 @@ def segmentation(df: pd.DataFrame, threshold: float):
 
         segmentationIndex = sigma2 / sigma1
         
+        
         if ((segmentationIndex > threshold) and searchNewSegment): 
             #print(f"Found new segment at index {i} ")
             # quando supero la threshold e non sono in un nuovo segmento vuol dire che ho trovato un nuovo segmento
@@ -399,10 +427,23 @@ def segmentation(df: pd.DataFrame, threshold: float):
             segmentationMatrix = np.vstack([segmentationMatrix, row[1:]])
             searchNewSegment = False
             numberOfSegments += 1
+            iterations_since_last_segment = 0  # Reset counter when finding a new segment
+            i = 0
 
         elif ((not searchNewSegment) and (segmentationIndex <= threshold)):
             # posso cercare un nuovo segmento se sono in un nuovo segmento e se scendo al di sotto della soglia in attesa di risalirci 
             searchNewSegment = True
+            iterations_since_last_segment = 0  # Reset counter when starting to search for a new segment
+        
+        # Check if we're stuck searching for a new segment
+        if searchNewSegment:
+            iterations_since_last_segment += 1
+            if iterations_since_last_segment >= max_iterations_without_segment:
+                raise SegmentationStuckError(
+                    f"Segmentation stuck: Failed to find a new segment after {max_iterations_without_segment} iterations. "
+                    f"Current frame: {i}, Total segments found so far: {numberOfSegments}. "
+                    f"This execution will be skipped."
+                )
 
         segmentationIndexList.append(segmentationIndex)
         i += 1
@@ -465,7 +506,11 @@ def segmentation_on_activity(file_path: str, features: list, activity: str, thre
         # Reset index to start from 0
         df_log = df_log.reset_index(drop=True)
         
-        _, numberOfSegments, rsv, lsv_dict = segmentation(df_log, threshold)
+        try:
+            _, numberOfSegments, rsv, lsv_dict = segmentation(df_log, threshold)
+        except SegmentationStuckError as e:
+            print(f"WARNING: Skipping log number {log_number} for user: {e}")
+            continue
 
         #print(f"Number of segments detected for log number {log_number}: {numberOfSegments}\n")
         logNumber_numberSegments.append((log_number.item(), numberOfSegments))
@@ -738,7 +783,11 @@ def test_lsv_with_plot():
         df_log = df_log.reset_index(drop=True)
         
         # Perform segmentation and get LSV dictionary
-        _, n, _, lsv_dict = segmentation(df_log, threshold=threshold)
+        try:
+            _, n, _, lsv_dict = segmentation(df_log, threshold=threshold)
+        except SegmentationStuckError as e:
+            print(f"WARNING: Skipping log number {log_number} in test_lsv_with_plot: {e}")
+            continue
         # print(f"Log Number {log_number}: Number of segments: {n}")
         
         # Plot LSV for each segment using the existing function
@@ -783,7 +832,11 @@ def test_lsv():
         df_log = df_log.reset_index(drop=True)
         
         # Perform segmentation and get LSV dictionary
-        _, n, _, lsv_dict = segmentation(df_log, threshold=threshold)
+        try:
+            _, n, _, lsv_dict = segmentation(df_log, threshold=threshold)
+        except SegmentationStuckError as e:
+            print(f"WARNING: Skipping log number {log_number} in test_lsv: {e}")
+            continue
         # print(f"Log Number {log_number}: Number of segments: {n}")
         
         # Plot LSV for each segment
@@ -817,12 +870,24 @@ def test_lsv():
         # print(f"Completed plotting for log number {log_number}\n")
 
 def test(): 
-    threshold = 0.5
+    threshold = [0.5, 0.6, 0.7]
     scaler = "standard"
-    target_activity = "sphereActivity"
-    file_path = "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/raw_filtered_openday/grims5/grims5_log_20260208_1024_UJE1BA5PET.csv"
+    target_activity = ["sphereActivity", "ladderActivity"]
+
+    file_path = [
+        "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/bin_datalogs/h/h_log_20260210_1213_OXG49PT1XD.csv",
+        "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/raw_openday/jkg/jkg_log_20260212_1142_T7FBNW90QR.csv",
+        "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/raw/test_data/se/se_log_20260212_1200_P2273HE1ZY.csv",
+        "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/raw/test_data/yghgjg/yghgjg_log_20260212_1218_D4NRC56HS9.csv"
+        ]
     #file_path = "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/raw_filtered_openday/p/p_log_20260210_1125_4OZDNJU79G.csv"
-    log_n, rsvs, _ = segmentation_on_activity(file_path=file_path, threshold=threshold, scaler=scaler, activity=target_activity, features=config.FEATURES[1:])
+    for file in file_path:
+        print(f"Processing file: {file}\n")
+        for act in target_activity:
+            print(f"Processing activity: {act}\n")
+            for thresh in threshold:
+                print(f"Processing threshold: {thresh}\n")
+                log_n, rsvs, _ = segmentation_on_activity(file_path=file, threshold=thresh, scaler=scaler, activity=act, features=config.FEATURES[1:])
 
     print(f"Done..\n")
     print(f"Log number and segments: {log_n}\n")

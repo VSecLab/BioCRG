@@ -120,10 +120,10 @@ def transition_matrix_computation(adj_df: pd.DataFrame, activity_df: pd.DataFram
 
     # Calcola il numero medio di stati per sequenza
     avg_states_per_sequence = np.mean(sequence_lengths) if sequence_lengths else 0
-    print(f"Average: {avg_states_per_sequence:.2f}")
-    print(f"Total sequences: {len(sequence_lengths)}")
-    print(f"Minimum sequence length: {min(sequence_lengths) if sequence_lengths else 0}")
-    print(f"Maximum sequence length: {max(sequence_lengths) if sequence_lengths else 0}")
+    #print(f"Average: {avg_states_per_sequence:.2f}")
+    #print(f"Total sequences: {len(sequence_lengths)}")
+    #print(f"Minimum sequence length: {min(sequence_lengths) if sequence_lengths else 0}")
+    #print(f"Maximum sequence length: {max(sequence_lengths) if sequence_lengths else 0}")
 
     # Probabilità iniziali
     initial_prob_vector = np.array([counter.get(state, 0) / total for state in state_list])

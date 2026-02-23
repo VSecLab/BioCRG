@@ -1,6 +1,5 @@
 import os 
 
-
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
@@ -12,19 +11,18 @@ import pandas as pd
 
 from contextlib import contextmanager
 from multiprocessing import Process, Lock 
-from run_model_suffix_nofile import run_model_suffix_pipeline
+from run_model_markov_nofile import run_model_pipeline
 from data_processing.src import config
 
 
-N_PROCESSES = 4
+N_PROCESSES = 6
 BATCH_SIZE = 5
-FILE_PATH = config.RESULTS_DIR + f"/grid_results/results_suffix_mp.csv"
+FILE_PATH = config.RESULTS_DIR + f"/grid_results/results_markov_mp.csv"
 
 EXPECTED_COLUMNS = [
     "Username", "Features", "Target_Activity", "TestActivity", "Target_Threshold", 
-    "Test_Threshold", "Clustering", "eps", "min_samples", "K", "scaler", "pmin", 
-    "gamma_min", "eps_suffix", "LogNumber", "N_states", "Ghost_Count", "Ghost_Exp", 
-    "Concat", "L", "AvgLogProb"
+    "Test_Threshold", "Clustering", "eps", "min_samples", "K", "scaler", 
+    "LogNumber", "N_states", "Ghost_Count", "Ghost_Exp", "Concat", "AvgLogProb", "L"
 ]
 
 PARAM_GRID = {
@@ -34,14 +32,10 @@ PARAM_GRID = {
     'scaler': ['standard'],
     'feature_mode': ['both'],
     'clustering_algorithm': ['kmeans'],
-    'k_value': [5,6,7,8,9,10],
+    'k_value': [5, 6, 7, 8, 9, 10],
     'eps': [0.25],
     'min_samples': [11],
-    'l_value': [2, 4, 6, 8, 10],
     'ghost_exp': [4],
-    'pmin': [0.000001, 0.00001, 0.0001],
-    'gamma_min': [0.0, 0.000001, 0.0001],
-    'eps_suffix': [0.0],
     'enable_plots': [False],
     'save_output': [False]
 }
@@ -94,9 +88,12 @@ def generate_combinations(param_grid, limit=None, skip=0):
     
     return combinations
 
+
 def chunk_list(lst, n):
+    """Split a list into chunks of size n."""
     for i in range(0, len(lst), n):
         yield lst[i:i+n]
+
 
 def initialize_output_file(filename, columns):
     """
@@ -123,27 +120,38 @@ def suppress_stdout():
         finally:
             sys.stdout = old_stdout
 
+
 def worker(process_id, param_chunk, batch_size, filename, lock):
+    """
+    Worker function for parallel processing.
+    
+    Args:
+        process_id: ID of the worker process
+        param_chunk: Chunk of parameter combinations to process
+        batch_size: Number of combinations to process before writing to file
+        filename: Path to the output file
+        lock: Lock for synchronized file writing
+    """
     i = 1
     for batch in chunk_list(param_chunk, batch_size):
         print(f"Process {process_id}: Starting batch {i} with {len(batch)} combinations...")
-        #with suppress_stdout():
+        # with suppress_stdout():
         try:
             results = []
              
             for params in batch:
                 try:
-                    result = run_model_suffix_pipeline(process_id=process_id, **params)
+                    result = run_model_pipeline(process_id=process_id, **params)
                     results.append(result)
                 except Exception as e:
-                    #print(f"Process {process_id}: ERROR in combination {params}: {e}")
+                    # print(f"Process {process_id}: ERROR in combination {params}: {e}")
                     import traceback
                     traceback.print_exc()
                     # Continua con le altre combinazioni invece di bloccare tutto
                     continue
             
             if not results:
-                #print(f"Process {process_id}: No valid results in batch {i}, skipping write")
+                # print(f"Process {process_id}: No valid results in batch {i}, skipping write")
                 continue
                 
             dfs = [res['final_results'] for res in results]
@@ -155,7 +163,8 @@ def worker(process_id, param_chunk, batch_size, filename, lock):
                 print(f"Process {process_id}: WARNING - Missing columns: {missing}")
            
             batch_df = batch_df.reindex(columns=EXPECTED_COLUMNS)
-            #print(f"Process {process_id}: Batch {i} - DataFrame shape: {batch_df.shape} - Columns: {batch_df.columns.tolist()}")
+            # print(f"Process {process_id}: Batch {i} - DataFrame shape: {batch_df.shape} - Columns: {batch_df.columns.tolist()}")
+            
             with lock:
                 batch_df.to_csv(filename, mode='a', header=False, index=False, na_rep='NaN')
 
@@ -169,17 +178,23 @@ def worker(process_id, param_chunk, batch_size, filename, lock):
         finally:
             cleanup_memory(verbose=False, process_id=process_id)
             i += 1
+    
     print(f"Process {process_id}: Finished all batches.")
 
 
 def main(): 
-
+    """Main function to run parallel grid search with Markov Chain model."""
     lock = Lock()
     combinations = generate_combinations(PARAM_GRID)
     chunk_size = max(1, len(combinations) // N_PROCESSES)
 
-    initialize_output_file(FILE_PATH, EXPECTED_COLUMNS)
+    print(f"Total combinations: {len(combinations)}")
+    print(f"Number of processes: {N_PROCESSES}")
+    print(f"Batch size: {BATCH_SIZE}")
+    print(f"Output file: {FILE_PATH}")
+    print("=" * 60)
 
+    initialize_output_file(FILE_PATH, EXPECTED_COLUMNS)
 
     process_chunks = [combinations[i*chunk_size:(i+1)*chunk_size] for i in range(N_PROCESSES)]
     # Aggiungi le rimanenti all'ultimo chunk
@@ -191,14 +206,17 @@ def main():
         p = Process(target=worker, args=(i, chunk, BATCH_SIZE, FILE_PATH, lock))
         processes.append(p)
         p.start()
+        print(f"Started Process {i} with {len(chunk)} combinations")
 
     for p in processes:
         p.join()
 
+    print("\n" + "=" * 60)
+    print("All processes completed!")
     for i, p in enumerate(processes):
         print(f"Process {i} exit code: {p.exitcode}")
+    print("=" * 60)
 
 
 if __name__ == "__main__":
-
     main()
