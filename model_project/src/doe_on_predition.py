@@ -5,6 +5,7 @@ import pandas as pd
 from data_processing.src import config 
 
 path = config.RESULTS_DIR + f"/grid_results/join_grid_results.csv"
+group_cols = ["Target_Activity", "TestActivity", "mode", "Threshold", "K"]
 
 def add_ghost_ratio(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -98,16 +99,17 @@ def filter_data(df: pd.DataFrame) -> pd.DataFrame:
     per ognuna, conta il numero di righe nel dataframe che la rispettano.
     Le combinazioni assenti nel dataframe avranno Count = 0.
     """
-    group_cols = ["Target_Activity", "TestActivity", "mode", "GhostRatio", "Actual"]
+   
 
     domain = {
         "Target_Activity": ["sphereActivity", "ladderActivity"],
         "TestActivity":    ["sphereActivity", "ladderActivity"],
         "mode":            ["markov", "suffix_tree"],
-        #"Threshold":       [0.5, 0.6, 0.7],
+        "Threshold":       [0.5, 0.6, 0.7],
+        "K":               list(range(5, 11)),
         #"GhostCount":      list(range(0, 11)),
-        "GhostRatio":      [round(i * 0.1, 1) for i in range(11)],
-        "Actual":          [0, 1],
+        #"GhostRatio":      [round(i * 0.1, 1) for i in range(11)],
+        #"Actual":          [0, 1],
     }
 
     all_combinations = pd.DataFrame(
@@ -207,8 +209,6 @@ def sample_by_min_count(
     if output_path is None:
         output_path = base_path + f"/sampled_min{min_count}.csv"
 
-    group_cols = ["Target_Activity", "TestActivity", "mode", "Actual", "GhostRatio"]
-
     counts_df = pd.read_csv(counts_csv_path)
     doe_df = pd.read_csv(doe_csv_path)
 
@@ -267,14 +267,33 @@ if __name__ == "__main__":
     
     filtering()
     
-    mode = "suffix"
-    count_path = f"/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/doe/filtered_counts_{mode}.csv"
-    doe_csv_path = "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/doe/doe_on_predictions.csv"
-    path = "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/doe/min_count"
-    
-    os.makedirs(path, exist_ok=True)
-    output_path = path + f"/{mode}_sampled_min10.csv"
-    res = sample_by_min_count(min_count=10, counts_csv_path=count_path, doe_csv_path=doe_csv_path, output_path=output_path)
+    modes = ["markov", "suffix"]
+    for mode in modes:
+        print(f"\nSampling for mode: {mode}")
+        count_path = f"/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/doe/filtered_counts_{mode}.csv"
+        doe_csv_path = "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/doe/doe_on_predictions.csv"
+        path = "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/doe/min_count"
+        
+        os.makedirs(path, exist_ok=True)
+        output_path = path + f"/{mode}_sampled_min10.csv"
+        res = sample_by_min_count(min_count=10, counts_csv_path=count_path, doe_csv_path=doe_csv_path, output_path=output_path)
+
     
 
     
+
+
+"""
+
+
+Abbiamo dati polarizzati e dobbiamo filtrare. 
+
+Parametri che rappresentano i nostri fattori: 
+1. Target_Activity: sphereActivity, ladderActivity
+2. TestActivity: sphereActivity, ladderActivity
+3. mode: markov, suffix_tree
+4. Threshold: 0.5, 0.6, 0.7
+5. K: da 5 a 10
+
+Dobbiamo avere lo stesso nuemro di test per le loro combinazioni. 
+"""
