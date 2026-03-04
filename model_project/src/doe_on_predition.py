@@ -98,7 +98,7 @@ def filter_data(df: pd.DataFrame) -> pd.DataFrame:
     per ognuna, conta il numero di righe nel dataframe che la rispettano.
     Le combinazioni assenti nel dataframe avranno Count = 0.
     """
-    group_cols = ["Target_Activity", "TestActivity", "GhostRatio", "Actual"]
+    group_cols = ["Target_Activity", "TestActivity", "mode", "GhostRatio", "Actual"]
 
     domain = {
         "Target_Activity": ["sphereActivity", "ladderActivity"],
@@ -207,7 +207,7 @@ def sample_by_min_count(
     if output_path is None:
         output_path = base_path + f"/sampled_min{min_count}.csv"
 
-    group_cols = ["Target_Activity", "TestActivity", "Actual", "GhostRatio"]
+    group_cols = ["Target_Activity", "TestActivity", "mode", "Actual", "GhostRatio"]
 
     counts_df = pd.read_csv(counts_csv_path)
     doe_df = pd.read_csv(doe_csv_path)
@@ -267,7 +267,7 @@ if __name__ == "__main__":
     
     filtering()
     
-    mode = "markov"
+    mode = "suffix"
     count_path = f"/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/doe/filtered_counts_{mode}.csv"
     doe_csv_path = "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/doe/doe_on_predictions.csv"
     path = "/Users/grims/Documents/Research/Tesi/ML_tesi/data_logs/doe/min_count"
