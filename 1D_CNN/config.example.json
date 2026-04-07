@@ -1,0 +1,6 @@
+{
+    "raw_data" : "/path/to/your/raw/data", 
+    "test_data" : "/path/to/your/test/data",
+    "timesteps" : 50,
+    "stride" : 5
+}
